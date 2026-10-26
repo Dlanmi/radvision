@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import Schematic from '../components/Schematic.astro';
+---
+
+<Base title="Página no encontrada">
+  <section class="wrap grid items-center gap-12 py-16 md:grid-cols-12 md:py-28">
+    <div class="md:col-span-7">
+      <p class="label text-ink-3">Error 404 · Serie no encontrada</p>
+      <h1 class="display mt-6 text-[clamp(2.6rem,1.4rem+4.2vw,5.5rem)]">Esta imagen <em>no está en el PACS.</em></h1>
+      <p class="mt-8 max-w-[44ch] text-[1.125rem] text-ink-2">
+        La página que buscas no existe o cambió de dirección. Puedes volver al inicio o buscar un equipo, algoritmo o término.
+      </p>
+      <div class="mt-10 flex flex-wrap gap-3">
+        <a href="/" class="btn btn-solid">Volver al inicio <span class="arrow">→</span></a>
+        <button type="button" class="btn btn-ghost" data-open-search>Buscar</button>
+      </div>
+    </div>
+    <div class="crop border border-line p-8 text-ink-3 md:col-span-5">
+      <Schematic id="tac" />
+    </div>
+  </section>
+</Base>

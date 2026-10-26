@@ -1,0 +1,60 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import { equiposDe, fabricantes, modalidadPorId, nn, nombreCorto } from '../../data';
+---
+
+<Base title="Fabricantes" description="Siemens Healthineers, GE HealthCare, United Imaging Healthcare y Philips: sus equipos con IA autorizada por la FDA.">
+  <PageHead crumbs={[{ label: 'Fabricantes' }]} kicker={`${nn(fabricantes.length)} fabricantes · ${nn(fabricantes.length * 8)} fichas`}>
+    Fabricantes
+    <Fragment slot="lead">
+      El documento organiza el listado por fabricante. Cada uno presenta una ficha por modalidad y una matriz
+      comparativa de impacto diagnóstico y operativo.
+    </Fragment>
+  </PageHead>
+
+  <section class="wrap pb-20 md:pb-28">
+    <ol class="border-t border-ink" data-reveal="stagger">
+      {
+        fabricantes.map((f, i) => {
+          const lista = equiposDe(f.id);
+          return (
+            <li class="border-b border-line">
+              <a href={`/fabricantes/${f.id}/`} class="fab grid gap-6 py-8 md:grid-cols-12 md:py-12">
+                <span class="label tnum text-ink-3 md:col-span-1">{nn(i + 1)}</span>
+                <span class="md:col-span-5">
+                  <span class="display block text-[clamp(1.9rem,1.25rem+2.2vw,3.25rem)]">{f.nombre}</span>
+                  <span class="label mt-3 block text-ink-3">{f.sede}</span>
+                </span>
+                <span class="text-ink-2 md:col-span-4">{f.enfoque}</span>
+                <span class="label space-y-1 text-ink-3 md:col-span-2">
+                  {lista.map((e) => (
+                    <span class="flex gap-2">
+                      <span class="w-9 shrink-0 text-ink-2">{modalidadPorId[e.modalidad].codigo}</span>
+                      <span class="truncate normal-case tracking-normal">{nombreCorto(e)}</span>
+                    </span>
+                  ))}
+                </span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+</Base>
+
+<style>
+  .fab {
+    transition: background-color 0.25s;
+  }
+  .fab .display {
+    transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  @media (hover: hover) {
+    .fab:hover .display {
+      transform: translateX(0.6rem);
+      color: var(--c-accent-ink);
+    }
+  }
+</style>

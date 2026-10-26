@@ -1,0 +1,24 @@
+---
+import { segmentar } from '../lib/glosario';
+
+interface Props {
+  text: string;
+  /** Registro compartido para enlazar cada término una sola vez por página/sección. */
+  seen?: Set<string>;
+}
+
+const { text, seen } = Astro.props;
+const segmentos = segmentar(text, seen);
+---
+
+{
+  segmentos.map((s) =>
+    s.t === 'txt' ? (
+      s.v
+    ) : (
+      <button type="button" class="term" data-term={s.id}>
+        {s.v}
+      </button>
+    ),
+  )
+}

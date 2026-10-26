@@ -1,0 +1,160 @@
+---
+import Base from '../layouts/Base.astro';
+import Siguiente from '../components/Siguiente.astro';
+import PageHead from '../components/PageHead.astro';
+import SectionHead from '../components/SectionHead.astro';
+import SenaLogo from '../components/SenaLogo.astro';
+import { criterios, presentacion, proyecto } from '../data/proyecto';
+import { equipos, fabricantes, modalidades, nn } from '../data';
+import { glosario } from '../data/glosario';
+
+const datos = [
+  ['Entidad', proyecto.entidad],
+  ['Regional', proyecto.regional],
+  ['Centro', proyecto.centro],
+  ['Programa de formación', proyecto.programa],
+  ['Código del programa', proyecto.codigoPrograma],
+  ['Ficha', proyecto.ficha],
+  ['Instructor', proyecto.instructor],
+];
+
+const lectura = [
+  { t: 'Módulo de IA y estado FDA', d: 'Qué algoritmo trae el equipo y por qué vía regulatoria fue autorizado.' },
+  { t: 'Funcionalidad y características técnicas', d: 'Cómo funciona el algoritmo: redes neuronales, datos crudos, cámaras 3D, reconstrucción.' },
+  { t: 'Propósito clínico', d: 'En qué estudios y pacientes aporta valor en la práctica diaria del servicio.' },
+  { t: 'Integración', d: 'Cómo se conecta con el PACS, el RIS y la historia clínica mediante DICOM y HL7.' },
+  { t: 'Perspectiva interdisciplinaria', d: 'Lectura desde física médica e ingenierías biomédica, industrial, eléctrica y mecánica.' },
+  { t: 'Matriz comparativa', d: 'La fila del equipo en la tabla del fabricante: algoritmo, impacto físico y operativo.' },
+];
+---
+
+<Base title="Proyecto" description="Proyecto formativo del SENA: lista detallada de herramientas de IA en equipos de imagen diagnóstica. Programa Tecnología en Radiología e Imágenes Diagnósticas.">
+  <PageHead crumbs={[{ label: 'Proyecto' }]} kicker={`SENA · Ficha ${proyecto.ficha}`}>
+    {proyecto.documento}
+    <Fragment slot="lead">{presentacion}</Fragment>
+  </PageHead>
+
+  <section class="wrap pb-16 md:pb-24">
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-8">
+      <div class="lg:col-span-7" data-reveal="up">
+        <p class="label mb-4 text-ink-3">Datos generales</p>
+        <dl class="border-t border-ink">
+          {
+            datos.map(([k, v]) => (
+              <div class="grid grid-cols-1 gap-1 border-b border-line py-4 sm:grid-cols-[13rem_1fr] sm:gap-6">
+                <dt class="label pt-1 text-ink-3">{k}</dt>
+                <dd class="text-[1.0625rem]">{v}</dd>
+              </div>
+            ))
+          }
+          {
+            proyecto.aprendices.length > 0 && (
+              <div class="grid grid-cols-1 gap-1 border-b border-line py-4 sm:grid-cols-[13rem_1fr] sm:gap-6">
+                <dt class="label pt-1 text-ink-3">Aprendices</dt>
+                <dd class="text-[1.0625rem]">
+                  {proyecto.aprendices.map((a) => (
+                    <span class="block">{a}</span>
+                  ))}
+                </dd>
+              </div>
+            )
+          }
+        </dl>
+      </div>
+      <div class="lg:col-span-4 lg:col-start-9" data-reveal="up" data-delay="0.1">
+        <div class="mb-10 flex items-center gap-5 border border-line p-5">
+          <SenaLogo size={88} class="size-[88px] shrink-0" />
+          <p class="text-[0.9375rem] leading-snug text-ink-2">
+            <span class="block font-semibold text-ink">{proyecto.entidad}</span>
+            {proyecto.regional} · {proyecto.centro}
+          </p>
+        </div>
+        <p class="label mb-4 text-ink-3">Alcance</p>
+        <dl class="grid grid-cols-2 border-t border-ink">
+          {
+            [
+              [equipos.length, 'fichas'],
+              [modalidades.length, 'modalidades'],
+              [fabricantes.length, 'fabricantes'],
+              [glosario.length, 'términos'],
+            ].map(([v, l], i) => (
+              <div class:list={['border-b border-line py-5', i % 2 === 1 && 'border-l pl-5']}>
+                <dd class="display text-[2.6rem] leading-none">{nn(Number(v))}</dd>
+                <dt class="label mt-2 text-ink-3">{l}</dt>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-t border-line bg-bg-2 py-16 md:py-24">
+    <div class="wrap">
+      <SectionHead n="01" kicker="Criterios">
+        Qué se evaluó <em>en cada equipo</em>
+        <Fragment slot="lead">
+          Los criterios están enfocados a la práctica diaria de diferentes perfiles de servicios de radiología e
+          imágenes diagnósticas. El listado se organiza por fabricante.
+        </Fragment>
+      </SectionHead>
+      <ol class="mt-12 border-t border-ink md:mt-16" data-reveal="stagger">
+        {
+          criterios.map((c) => (
+            <li class="grid grid-cols-1 gap-3 border-b border-line py-6 md:grid-cols-12 md:gap-8">
+              <span class="display text-[2rem] leading-none text-accent-ink md:col-span-1">{nn(c.n)}</span>
+              <h3 class="h-sub md:col-span-4">{c.titulo}</h3>
+              <p class="text-ink-2 md:col-span-7 md:pt-1">{c.texto}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="wrap py-16 md:py-24">
+    <SectionHead n="02" kicker="Cómo leer una ficha">
+      Seis apartados, <em>siempre en el mismo orden</em>
+    </SectionHead>
+    <ol class="mt-12 grid gap-px border border-line bg-line sm:grid-cols-2 md:mt-16 lg:grid-cols-3" data-reveal="stagger">
+      {
+        lectura.map((l, i) => (
+          <li class="bg-bg p-6">
+            <span class="label tnum text-accent-ink">{nn(i + 1)}</span>
+            <h3 class="mt-6 text-[1.125rem] font-semibold">{l.t}</h3>
+            <p class="mt-2 text-[0.9375rem] text-ink-2">{l.d}</p>
+          </li>
+        ))
+      }
+    </ol>
+    <div class="mt-10">
+      <a href="/equipos/siemens-tac/" class="btn btn-solid">Ver una ficha de ejemplo <span class="arrow">→</span></a>
+    </div>
+  </section>
+
+  <section class="border-t border-line py-16 md:py-24">
+    <div class="wrap grid gap-10 md:grid-cols-12">
+      <div class="md:col-span-3">
+        <p class="label text-ink-3"><span class="text-accent">03</span>&ensp;Fuentes y alcance</p>
+      </div>
+      <div class="space-y-5 text-ink-2 md:col-span-7">
+        <p>
+          Las fichas, las matrices comparativas y todas las cifras provienen del documento «{proyecto.documento}»,
+          elaborado en el programa {proyecto.programa}. El documento atribuye algunas cifras a estudios multicéntricos
+          y ponencias de RSNA; para la mayoría no cita una fuente específica.
+        </p>
+        <p>
+          El glosario, los resúmenes de cada modalidad, las sedes de los fabricantes y los gráficos de indicadores son
+          textos y visualizaciones de apoyo elaborados para este sitio. Las fotografías de producto son material de
+          prensa de cada fabricante y se usan con fines académicos, con su crédito. Los esquemas de cada modalidad son
+          ilustraciones propias y no representan un modelo comercial específico.
+        </p>
+        <p>
+          El sitio es un recurso académico y no constituye recomendación clínica, de compra ni de uso de ningún equipo.
+        </p>
+        <p class="label pt-4 text-ink-3">Construido con Astro, TypeScript, Tailwind CSS y GSAP.</p>
+      </div>
+    </div>
+  </section>
+  <Siguiente desde="proyecto" />
+</Base>

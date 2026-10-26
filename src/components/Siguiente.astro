@@ -1,0 +1,55 @@
+---
+import { pasoSiguiente, ruta } from '../data/ruta';
+import { nn } from '../data';
+
+interface Props {
+  /** Paso actual del recorrido. */
+  desde: string;
+  /** Destino alternativo cuando el recorrido termina. */
+  final?: { titulo: string; texto: string; href: string; cta: string };
+  /** Texto del rótulo cuando se usa `final`. */
+  etiquetaFinal?: string;
+}
+const { desde, final, etiquetaFinal = 'Fin del recorrido' } = Astro.props;
+const sig = pasoSiguiente(desde);
+const destino = sig?.paso ?? final;
+const etiqueta = sig?.paso ? `Paso ${nn(sig.n)} de ${nn(ruta.length)}` : etiquetaFinal;
+---
+
+{
+  destino && (
+    <aside class="siguiente border-t border-ink" aria-label="Siguiente paso del recorrido">
+      <a href={destino.href} class="wrap group grid gap-6 py-12 md:grid-cols-12 md:items-end md:py-16">
+        <span class="md:col-span-3">
+          <span class="label block text-ink-3">Siguiente paso</span>
+          <span class="label mt-2 block text-accent-ink">{etiqueta}</span>
+        </span>
+        <span class="md:col-span-6">
+          <span class="h-section block">{destino.titulo}</span>
+          <span class="mt-3 block max-w-[52ch] text-ink-2">{destino.texto}</span>
+        </span>
+        <span class="md:col-span-3 md:text-right">
+          <span class="btn btn-solid">
+            {destino.cta} <span class="arrow">→</span>
+          </span>
+        </span>
+      </a>
+    </aside>
+  )
+}
+
+<style>
+  .siguiente a {
+    transition: background-color 0.25s;
+  }
+  @media (hover: hover) {
+    .siguiente a:hover .btn {
+      background: var(--c-accent);
+      border-color: var(--c-accent);
+      color: #0d0f0e;
+    }
+    .siguiente a:hover .h-section {
+      color: var(--c-accent-ink);
+    }
+  }
+</style>

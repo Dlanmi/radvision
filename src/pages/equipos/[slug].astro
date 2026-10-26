@@ -1,0 +1,454 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import FiguraEquipo from '../../components/FiguraEquipo.astro';
+import Cifras from '../../components/Cifras.astro';
+import Rich from '../../components/Rich.astro';
+import Parrafos from '../../components/Parrafos.astro';
+import EquipoCard from '../../components/EquipoCard.astro';
+import PrevNext from '../../components/PrevNext.astro';
+import Siguiente from '../../components/Siguiente.astro';
+import {
+  areaNombre,
+  equipos,
+  equiposDe,
+  equiposEn,
+  fabricantePorId,
+  modalidadPorId,
+  modalidades,
+  nn,
+  nombreCorto,
+  productosDe,
+} from '../../data';
+import type { Equipo } from '../../data/types';
+
+export const getStaticPaths = (() =>
+  equipos.map((e) => ({ params: { slug: e.slug }, props: { e } }))) satisfies GetStaticPaths;
+
+interface Props {
+  e: Equipo;
+}
+
+const { e } = Astro.props;
+const f = fabricantePorId[e.fabricante];
+const m = modalidadPorId[e.modalidad];
+const iMod = modalidades.findIndex((x) => x.id === m.id);
+const productos = productosDe(e);
+const otros = equiposEn(e.modalidad).filter((x) => x.slug !== e.slug);
+const propios = equiposDe(e.fabricante);
+const k = propios.findIndex((x) => x.slug === e.slug);
+const prev = propios[k - 1];
+const next = propios[k + 1];
+
+// Registro compartido: cada término del glosario se enlaza una vez por ficha.
+const vistos = new Set<string>();
+
+const secciones = [
+  { id: 'modulo', t: 'Módulo de IA y estado FDA' },
+  { id: 'funcionalidad', t: 'Funcionalidad y características técnicas' },
+  { id: 'proposito', t: 'Propósito clínico' },
+  { id: 'integracion', t: 'Integración' },
+  { id: 'perspectiva', t: 'Perspectiva interdisciplinaria' },
+];
+
+// Tiempo de lectura aproximado (200 palabras por minuto).
+const palabras = [e.moduloIA, e.funcionalidad, e.proposito, e.integracion, ...e.perspectivas.map((p) => p.texto)]
+  .join(' ')
+  .split(/\s+/).length;
+const minutos = Math.max(1, Math.round(palabras / 200));
+---
+
+<Base
+  title={`${productos[0].nombre} · ${f.corto}`}
+  description={`${e.nombre} (${f.nombre}): ${e.algoritmos.join(', ')}. ${e.proposito}`}
+>
+  <PageHead
+    crumbs={[
+      { href: '/modalidades/', label: 'Modalidades' },
+      { href: `/modalidades/${m.id}/`, label: m.corto },
+      { label: productos[0].nombre },
+    ]}
+  >
+    {
+      productos.map((p, i) => (
+        <span class="block">
+          {i > 0 && <span class="text-ink-3">/ </span>}
+          {i > 0 ? <em>{p.nombre}</em> : p.nombre}
+          {p.nota && <span class="nota">{p.nota}</span>}
+        </span>
+      ))
+    }
+    <Fragment slot="lead">
+      <span class="block">{e.descriptor}</span>
+    </Fragment>
+    <div slot="after" class="mt-8 flex flex-wrap items-center gap-2" data-reveal="up" data-delay="0.35">
+      <a href={`/fabricantes/${f.id}/`} class="tag border-ink hover:bg-ink hover:text-bg">{f.nombre}</a>
+      <a href={`/modalidades/${m.id}/`} class="tag hover:border-ink">{m.codigo} · {m.corto}</a>
+      {e.regulatorio.map((r) => <span class="tag tag-reg">{r}</span>)}
+    </div>
+    <div slot="aside">
+      <FiguraEquipo clave={e.slug} modalidad={m.id} fig={nn(iMod + 1)} codigo={m.codigo} nombre={e.nombre} />
+    </div>
+  </PageHead>
+
+  {
+    e.cifras.length > 0 && (
+      <section class="wrap" aria-label="Cifras clave">
+        <Cifras cifras={e.cifras} size="lg" />
+      </section>
+    )
+  }
+
+  <div class="wrap grid gap-10 pt-16 pb-20 md:pt-24 lg:grid-cols-12 lg:gap-8">
+    <aside class="hidden lg:col-span-3 lg:block">
+      <nav class="sticky top-[calc(var(--header-h)+2rem)]" aria-label="Secciones de la ficha" data-toc>
+        <p class="label mb-4 flex justify-between text-ink-3">
+          <span>Ficha técnica</span>
+          <span>≈ {minutos} min</span>
+        </p>
+        <ol class="space-y-1 border-l border-line">
+          <li>
+            <a href="#esencial" class="toc-link" data-toc-link="esencial">
+              <span class="label tnum">00</span>
+              <span>Lo esencial</span>
+            </a>
+          </li>
+          {
+            secciones.map((s, i) => (
+              <li>
+                <a href={`#${s.id}`} class="toc-link" data-toc-link={s.id}>
+                  <span class="label tnum">{nn(i + 1)}</span>
+                  <span>{s.t}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+        <div class="mt-10 border-t border-line pt-6">
+          <p class="label text-ink-3">Algoritmos citados</p>
+          <ul class="mt-3 space-y-1.5 text-[0.9375rem]">
+            {e.algoritmos.map((a) => <li>{a}</li>)}
+          </ul>
+        </div>
+        <p class="mt-8 border-t border-line pt-5 text-[0.8125rem] leading-snug text-ink-2">
+          Las palabras con <span class="term">subrayado punteado</span> muestran su definición al pasar el cursor.
+        </p>
+      </nav>
+    </aside>
+
+    <article class="lg:col-span-8 lg:col-start-5">
+      <section id="esencial" class="esencial" data-sec aria-labelledby="esencial-h">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 id="esencial-h" class="sec-h !mb-0"><span class="label tnum">00</span>Lo esencial</h2>
+          <span class="label text-ink-3 lg:hidden">Lectura completa ≈ {minutos} min</span>
+        </div>
+        <dl class="esencial-lista">
+          <div>
+            <dt class="label">Algoritmo central de IA</dt>
+            <dd class="font-semibold">{e.matriz.algoritmo}</dd>
+          </div>
+          <div>
+            <dt class="label">Impacto físico-médico / calidad de imagen</dt>
+            <dd><Rich text={e.matriz.impactoFisico} seen={vistos} /></dd>
+          </div>
+          <div>
+            <dt class="label">Impacto operativo</dt>
+            <dd><Rich text={e.matriz.impactoOperativo} seen={vistos} /></dd>
+          </div>
+        </dl>
+        <div class="mt-6 flex flex-wrap items-center gap-3">
+          <a href={`/comparador/?m=${m.id}`} class="btn btn-solid h-10">Comparar {m.corto} <span class="arrow">→</span></a>
+          <a href={`/fabricantes/${f.id}/#matriz`} class="btn btn-ghost h-10">Matriz de {f.corto}</a>
+        </div>
+        <p class="mt-5 text-[0.8125rem] text-ink-2 lg:hidden">
+          Las palabras con <span class="term">subrayado punteado</span> muestran su definición al tocarlas.
+        </p>
+      </section>
+
+      <section id="modulo" class="ficha-sec" data-sec>
+        <h2 class="sec-h"><span class="label tnum">01</span>Módulo de IA y estado FDA</h2>
+        <p class="lead-text"><Rich text={e.moduloIA} seen={vistos} /></p>
+      </section>
+
+      <section id="funcionalidad" class="ficha-sec" data-sec>
+        <h2 class="sec-h"><span class="label tnum">02</span>Funcionalidad y características técnicas</h2>
+        <Parrafos text={e.funcionalidad} seen={vistos} />
+      </section>
+
+      <section id="proposito" class="ficha-sec" data-sec>
+        <h2 class="sec-h"><span class="label tnum">03</span>Propósito clínico</h2>
+        <p class="prose-ficha"><Rich text={e.proposito} seen={vistos} /></p>
+      </section>
+
+      <section id="integracion" class="ficha-sec" data-sec>
+        <h2 class="sec-h"><span class="label tnum">04</span>Integración</h2>
+        <Parrafos text={e.integracion} seen={vistos} />
+      </section>
+
+      <section id="perspectiva" class="ficha-sec" data-sec>
+        <h2 class="sec-h"><span class="label tnum">05</span>Perspectiva interdisciplinaria</h2>
+        <div class="tabs" data-tabs>
+          <div class="tablist" role="tablist" aria-label="Disciplinas">
+            {
+              e.perspectivas.map((p, i) => (
+                <button
+                  type="button"
+                  role="tab"
+                  id={`tab-${i}`}
+                  aria-controls={`panel-${i}`}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  tabindex={i === 0 ? 0 : -1}
+                  data-tab={i}
+                >
+                  {p.label}
+                </button>
+              ))
+            }
+          </div>
+          {
+            e.perspectivas.map((p, i) => (
+              <div
+                class="tabpanel"
+                role="tabpanel"
+                id={`panel-${i}`}
+                aria-labelledby={`tab-${i}`}
+                data-panel={i}
+                data-active={i === 0 ? '' : undefined}
+              >
+                <p class="panel-h label">{p.label}</p>
+                <Parrafos text={p.texto} seen={vistos} class="prose-ficha text-[1.0625rem]" />
+                <p class="mt-5 flex flex-wrap gap-1.5">
+                  {p.areas.map((a) => (
+                    <span class="tag text-ink-3">{areaNombre[a]}</span>
+                  ))}
+                </p>
+              </div>
+            ))
+          }
+        </div>
+      </section>
+
+    </article>
+  </div>
+
+  <section class="border-t border-line bg-bg-2 py-16 md:py-20">
+    <div class="wrap">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <h2 class="h-sub">{m.nombre} en <em>otros fabricantes</em></h2>
+        <a href={`/modalidades/${m.id}/`} class="label link">Ver la modalidad →</a>
+      </div>
+      <div class="mt-8 grid gap-px border border-line bg-line md:grid-cols-3" data-reveal="stagger">
+        {otros.map((o) => <EquipoCard e={o} />)}
+      </div>
+    </div>
+  </section>
+
+  <Siguiente desde="ficha" />
+
+  <PrevNext
+    prev={prev && { href: `/equipos/${prev.slug}/`, label: nombreCorto(prev), sub: modalidadPorId[prev.modalidad].corto }}
+    next={next && { href: `/equipos/${next.slug}/`, label: nombreCorto(next), sub: modalidadPorId[next.modalidad].corto }}
+  />
+</Base>
+
+<style>
+  .nota {
+    display: block;
+    margin-top: 0.6rem;
+    margin-bottom: 0.4rem;
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-size: clamp(1rem, 0.9rem + 0.35vw, 1.25rem);
+    letter-spacing: 0;
+    line-height: 1.3;
+    color: var(--c-ink-3);
+  }
+  .tag-reg {
+    border-color: color-mix(in oklab, var(--c-accent) 55%, transparent);
+    color: var(--c-accent-ink);
+  }
+  .toc-link {
+    display: grid;
+    grid-template-columns: 1.75rem 1fr;
+    gap: 0.25rem;
+    align-items: baseline;
+    padding: 0.4rem 0 0.4rem 1rem;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    font-size: 0.9375rem;
+    color: var(--c-ink-3);
+    transition:
+      color 0.2s,
+      border-color 0.2s;
+  }
+  .toc-link:hover {
+    color: var(--c-ink);
+  }
+  .toc-link[aria-current='true'] {
+    color: var(--c-ink);
+    border-left-color: var(--c-accent);
+  }
+  .ficha-sec {
+    padding-block: 2.5rem;
+    border-top: 1px solid var(--c-line);
+  }
+  .esencial {
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    border: 1px solid var(--c-ink);
+    background: var(--c-bg-2);
+  }
+  .esencial-lista {
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--c-line);
+  }
+  .esencial-lista > div {
+    display: grid;
+    gap: 0.35rem 1.5rem;
+    padding-block: 0.8rem;
+    border-bottom: 1px solid var(--c-line);
+  }
+  .esencial-lista dt {
+    color: var(--c-ink-3);
+    padding-top: 0.15rem;
+  }
+  .esencial-lista dd {
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+  @media (min-width: 768px) {
+    .esencial {
+      padding: 1.75rem 2rem 2rem;
+    }
+    .esencial-lista > div {
+      grid-template-columns: 13rem 1fr;
+    }
+  }
+  .prose-ficha + .prose-ficha {
+    margin-top: 0.9em;
+  }
+  .sec-h {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.25rem;
+  }
+  .sec-h .label {
+    color: var(--c-accent-ink);
+    flex-shrink: 0;
+    transform: translateY(-0.15em);
+  }
+  .lead-text {
+    font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+    line-height: 1.4;
+    max-width: 40ch;
+  }
+  .tablist {
+    display: none;
+  }
+  .tabpanel + .tabpanel {
+    margin-top: 2rem;
+  }
+  .panel-h {
+    color: var(--c-ink-3);
+    margin-bottom: 0.75rem;
+  }
+  @media (min-width: 768px) {
+    .tablist {
+      display: flex;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--c-line);
+      margin-bottom: 1.75rem;
+    }
+    .tablist button {
+      position: relative;
+      padding: 0.8rem 1.1rem 0.9rem 0;
+      margin-right: 1.25rem;
+      font-size: 0.9375rem;
+      color: var(--c-ink-3);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .tablist button:hover {
+      color: var(--c-ink);
+    }
+    .tablist button[aria-selected='true'] {
+      color: var(--c-ink);
+    }
+    .tablist button[aria-selected='true']::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: var(--c-accent);
+    }
+    .tabpanel:not([data-active]) {
+      display: none;
+    }
+    .tabpanel + .tabpanel {
+      margin-top: 0;
+    }
+    .panel-h {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Pestañas de perspectiva interdisciplinaria (con flechas de teclado).
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tab]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
+    const activar = (i: number, foco = false) => {
+      tabs.forEach((t, k) => {
+        t.setAttribute('aria-selected', String(k === i));
+        t.tabIndex = k === i ? 0 : -1;
+      });
+      panels.forEach((p, k) => p.toggleAttribute('data-active', k === i));
+      if (foco) tabs[i].focus();
+      panels[i].animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], {
+        duration: 320,
+        easing: 'cubic-bezier(.2,.7,.2,1)',
+      });
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => activar(i));
+      t.addEventListener('keydown', (ev) => {
+        if (ev.key === 'ArrowRight') activar((i + 1) % tabs.length, true);
+        if (ev.key === 'ArrowLeft') activar((i - 1 + tabs.length) % tabs.length, true);
+      });
+    });
+  });
+
+  // Índice lateral: resalta la última sección cuyo inicio ya pasó el 40 % de la pantalla.
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
+  const secs = Array.from(document.querySelectorAll<HTMLElement>('[data-sec]'));
+  let pendiente = false;
+  const actualizar = () => {
+    pendiente = false;
+    const linea = innerHeight * 0.4;
+    let activa = secs[0]?.id;
+    for (const s of secs) if (s.getBoundingClientRect().top <= linea) activa = s.id;
+    links.forEach((a) => a.toggleAttribute('aria-current', a.dataset.tocLink === activa));
+    links.forEach((a) => a.dataset.tocLink === activa && a.setAttribute('aria-current', 'true'));
+  };
+  addEventListener(
+    'scroll',
+    () => {
+      if (!pendiente) {
+        pendiente = true;
+        requestAnimationFrame(actualizar);
+      }
+    },
+    { passive: true },
+  );
+  actualizar();
+</script>

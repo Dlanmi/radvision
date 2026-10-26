@@ -1,0 +1,101 @@
+---
+import type { Cifra } from '../data/types';
+import { tipoCifra } from '../data';
+
+interface Props {
+  cifras: Cifra[];
+  size?: 'sm' | 'lg';
+  class?: string;
+}
+const { cifras, size = 'sm', class: cls = '' } = Astro.props;
+---
+
+<ul class:list={['cifras', size, cls]}>
+  {
+    cifras.map((c) => (
+      <li>
+        <span class="label text-ink-3">{tipoCifra[c.tipo]}</span>
+        <span class="valor display tnum">
+          {c.hasta && <span class="hasta">hasta</span>}
+          {c.valor}
+          {c.unidad && <span class="u">{c.unidad}</span>}
+        </span>
+        <span class="t">{c.texto}</span>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .cifras {
+    display: grid;
+    gap: 0;
+  }
+  .cifras li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-block: 0.9rem;
+    border-top: 1px solid var(--c-line);
+  }
+  .valor {
+    font-size: 1.85rem;
+    line-height: 1;
+    margin-top: 0.35rem;
+  }
+  .hasta {
+    font-family: var(--font-sans);
+    font-size: max(0.32em, 0.75rem);
+    letter-spacing: 0;
+    margin-right: 0.3em;
+    color: var(--c-ink-3);
+    vertical-align: 0.25em;
+  }
+  .u {
+    font-size: 0.5em;
+    margin-left: 0.12em;
+    color: var(--c-ink-2);
+  }
+  .t {
+    font-size: 0.875rem;
+    line-height: 1.35;
+    color: var(--c-ink-2);
+  }
+  .lg {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+    border-top: 1px solid var(--c-ink);
+  }
+  .lg li {
+    border-top: 0;
+    padding: 1.25rem 1.5rem 1.5rem 0;
+  }
+  .lg li + li {
+    border-left: 1px solid var(--c-line);
+    padding-left: 1.5rem;
+  }
+  .lg .valor {
+    font-size: clamp(2.5rem, 1.9rem + 2vw, 3.75rem);
+    margin-top: 1rem;
+  }
+  .lg .t {
+    font-size: 1rem;
+    max-width: 26ch;
+  }
+  @media (max-width: 767px) {
+    .lg {
+      grid-template-columns: 1fr 1fr;
+    }
+    .lg li {
+      padding: 1rem 1rem 1.25rem 0;
+      border-bottom: 1px solid var(--c-line);
+    }
+    .lg li + li {
+      border-left: 0;
+      padding-left: 0;
+    }
+    .lg li:nth-child(even) {
+      border-left: 1px solid var(--c-line);
+      padding-left: 1rem;
+    }
+  }
+</style>

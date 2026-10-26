@@ -1,0 +1,52 @@
+---
+interface Link {
+  href: string;
+  label: string;
+  sub?: string;
+}
+interface Props {
+  prev?: Link;
+  next?: Link;
+}
+const { prev, next } = Astro.props;
+---
+
+<nav class="border-t border-ink" aria-label="Anterior y siguiente">
+  <div class="wrap grid sm:grid-cols-2">
+    {
+      prev ? (
+        <a href={prev.href} class="pn group border-b border-line py-8 sm:border-b-0 sm:border-r sm:pr-8">
+          <span class="label text-ink-3">← Anterior{prev.sub && ` · ${prev.sub}`}</span>
+          <span class="h-sub mt-3 block">{prev.label}</span>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      next && (
+        <a href={next.href} class="pn group py-8 text-right sm:pl-8">
+          <span class="label text-ink-3">{next.sub && `${next.sub} · `}Siguiente →</span>
+          <span class="h-sub mt-3 block">{next.label}</span>
+        </a>
+      )
+    }
+  </div>
+</nav>
+
+<style>
+  .pn .h-sub {
+    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  @media (hover: hover) {
+    .pn:hover .h-sub {
+      color: var(--c-accent-ink);
+    }
+    .pn:first-child:hover .h-sub {
+      transform: translateX(-0.4rem);
+    }
+    .pn:last-child:hover .h-sub {
+      transform: translateX(0.4rem);
+    }
+  }
+</style>

@@ -1,0 +1,420 @@
+---
+import Base from '../layouts/Base.astro';
+import Siguiente from '../components/Siguiente.astro';
+import PageHead from '../components/PageHead.astro';
+import Rich from '../components/Rich.astro';
+import { equiposEn, fabricantePorId, fabricantes, modalidades, tipoCifra } from '../data';
+import { Image } from 'astro:assets';
+import { fotosDe } from '../data/fotos';
+import Schematic from '../components/Schematic.astro';
+
+const filas = [
+  { k: 'algoritmo', t: 'Algoritmo central de IA' },
+  { k: 'impactoFisico', t: 'Impacto físico-médico / calidad de imagen' },
+  { k: 'impactoOperativo', t: 'Impacto operativo' },
+] as const;
+---
+
+<Base title="Comparador" description="Compara lado a lado los equipos de Siemens, GE, United Imaging y Philips en cada modalidad: algoritmo de IA, impacto dosimétrico y operativo.">
+  <PageHead crumbs={[{ label: 'Comparador' }]} kicker="Herramienta">
+    Comparador
+    <Fragment slot="lead">
+      Elige una modalidad y los fabricantes que quieres enfrentar. Las filas reúnen la matriz comparativa del documento,
+      las cifras clave y el propósito clínico de cada equipo.
+    </Fragment>
+  </PageHead>
+
+  <div class="controles" data-controles>
+    <div class="wrap flex flex-col gap-2.5 py-3 2xl:flex-row 2xl:items-center 2xl:gap-8">
+      <div class="flex min-w-0 items-center gap-4">
+        <span class="label hidden shrink-0 text-ink-3 sm:inline">Modalidad</span>
+        <div class="seg" role="radiogroup" aria-label="Modalidad">
+          {
+            modalidades.map((m, i) => (
+              <button type="button" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-m={m.id} title={m.nombre}>
+                <span class="label">{m.codigo}</span>
+                <span class="text-[0.875rem]">{m.corto}</span>
+              </button>
+            ))
+          }
+        </div>
+      </div>
+      <div class="flex items-center gap-4 2xl:ml-auto">
+        <span class="label shrink-0 text-ink-3">Mostrar</span>
+        <div class="flex flex-wrap gap-1.5">
+          {
+            fabricantes.map((f) => (
+              <button type="button" class="chip" aria-pressed="true" data-f={f.id}>
+                <span class="box" aria-hidden="true"></span>
+                {f.corto}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap pt-10 pb-20 md:pt-14 md:pb-28">
+    {
+      modalidades.map((m, i) => {
+        const lista = equiposEn(m.id);
+        return (
+          <section data-mod={m.id} data-current={i === 0 ? '' : undefined} aria-labelledby={`h-${m.id}`}>
+            <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <h2 id={`h-${m.id}`} class="h-section">
+                <span class="label mr-3 align-middle text-accent-ink">{m.codigo}</span>
+                {m.nombre}
+              </h2>
+              <a href={`/modalidades/${m.id}/`} class="label link">
+                Ver modalidad →
+              </a>
+            </div>
+            <div class="scroll-x">
+              <table class="tabla comp apilada" data-tabla>
+                <thead>
+                  <tr>
+                    <th scope="col" class="sticky-col">
+                      Aspecto
+                    </th>
+                    {lista.map((e) => (
+                      <th scope="col" class={`f-${e.fabricante}`}>
+                        {fabricantePorId[e.fabricante].nombre}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row" class="sticky-col label">
+                      Equipo
+                    </th>
+                    {lista.map((e) => (
+                      <td data-col={fabricantePorId[e.fabricante].corto} class={`f-${e.fabricante}`}>
+                        <span class:list={['mini mb-4', fotosDe(e.slug)[0]?.captura && 'captura']}>
+                          {fotosDe(e.slug)[0] ? (
+                            <Image src={fotosDe(e.slug)[0].img} alt={fotosDe(e.slug)[0].alt} widths={[320, 520]} sizes="240px" loading="lazy" />
+                          ) : (
+                            <Schematic id={e.modalidad} annotate={false} />
+                          )}
+                        </span>
+                        <a href={`/equipos/${e.slug}/`} class="link-u font-display text-[1.125rem] font-semibold leading-tight">
+                          {e.nombre}
+                        </a>
+                        <span class="mt-1 block text-[0.875rem] text-ink-3">{e.descriptor}</span>
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <th scope="row" class="sticky-col label">
+                      Algoritmos citados
+                    </th>
+                    {lista.map((e) => (
+                      <td data-col={fabricantePorId[e.fabricante].corto} class={`f-${e.fabricante}`}>
+                        <span class="flex flex-wrap gap-1">
+                          {e.algoritmos.map((a) => (
+                            <span class="tag">{a}</span>
+                          ))}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                  {filas.map((r) => (
+                    <tr>
+                      <th scope="row" class="sticky-col label">
+                        {r.t}
+                      </th>
+                      {lista.map((e) => (
+                        <td data-col={fabricantePorId[e.fabricante].corto} class={`f-${e.fabricante}`}>{e.matriz[r.k]}</td>
+                      ))}
+                    </tr>
+                  ))}
+                  <tr>
+                    <th scope="row" class="sticky-col label">
+                      Cifras clave
+                    </th>
+                    {lista.map((e) => (
+                      <td data-col={fabricantePorId[e.fabricante].corto} class={`f-${e.fabricante}`}>
+                        {e.cifras.length === 0 && <span class="text-ink-3">—</span>}
+                        <ul class="space-y-3">
+                          {e.cifras.map((c) => (
+                            <li>
+                              <span class="display text-[1.6rem] leading-none">
+                                {c.hasta && <span class="mr-1.5 align-[0.3em] font-sans text-[0.75rem] text-ink-3">hasta</span>}
+                                {c.valor}
+                                {c.unidad && <span class="text-[0.55em] text-ink-2"> {c.unidad}</span>}
+                              </span>
+                              <span class="block text-[0.875rem] text-ink-2">
+                                {c.texto} <span class="label text-ink-3">· {tipoCifra[c.tipo]}</span>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <th scope="row" class="sticky-col label">
+                      Propósito clínico
+                    </th>
+                    {lista.map((e) => (
+                      <td data-col={fabricantePorId[e.fabricante].corto} class={`f-${e.fabricante} text-[0.9375rem] text-ink-2`}>
+                        <Rich text={e.proposito} />
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <th scope="row" class="sticky-col label">
+                      Regulatorio
+                    </th>
+                    {lista.map((e) => (
+                      <td data-col={fabricantePorId[e.fabricante].corto} class={`f-${e.fabricante}`}>
+                        <span class="flex flex-wrap gap-1">
+                          {e.regulatorio.map((r) => (
+                            <span class="tag">{r}</span>
+                          ))}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
+                  <tr class="no-hover">
+                    <th scope="row" class="sticky-col" />
+                    {lista.map((e) => (
+                      <td data-col={fabricantePorId[e.fabricante].corto} class={`f-${e.fabricante}`}>
+                        <a href={`/equipos/${e.slug}/`} class="btn btn-ghost h-10">
+                          Ficha completa <span class="arrow">→</span>
+                        </a>
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })
+    }
+    <p class="label mt-6 text-ink-3 md:hidden">En celular se comparan dos fabricantes a la vez. Cámbialos con los botones «Mostrar».</p>
+  </div>
+  <Siguiente desde="comparador" />
+</Base>
+
+<style>
+  .controles {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 30;
+    background: color-mix(in oklab, var(--c-bg) 94%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-block: 1px solid var(--c-line);
+  }
+  @media (max-width: 767px) {
+    .controles {
+      position: relative;
+      top: auto;
+    }
+  }
+  .seg {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    min-width: 0;
+  }
+  .seg::-webkit-scrollbar {
+    display: none;
+  }
+  .seg button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 2.5rem;
+    padding-inline: 0.75rem;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    color: var(--c-ink-2);
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      border-color 0.2s;
+  }
+  .seg button:hover {
+    border-color: var(--c-line-strong);
+    color: var(--c-ink);
+  }
+  .seg button[aria-checked='true'] {
+    background: var(--c-ink);
+    color: var(--c-bg);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding-inline: 0.7rem;
+    border: 1px solid var(--c-line-strong);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      opacity 0.2s;
+  }
+  .chip .box {
+    width: 10px;
+    height: 10px;
+    border: 1px solid currentColor;
+    transition: background-color 0.2s;
+  }
+  .chip[aria-pressed='true'] .box {
+    background: var(--c-accent);
+    border-color: var(--c-accent);
+  }
+  .chip[aria-pressed='false'] {
+    color: var(--c-ink-3);
+  }
+  .comp {
+    --sticky-bg: var(--c-bg);
+  }
+  .comp td {
+    min-width: 13rem;
+  }
+  @media (max-width: 767px) {
+    .comp td {
+      min-width: 0;
+    }
+  }
+  @media (max-width: 767px) {
+    .mini {
+      max-width: 100%;
+    }
+  }
+  .mini {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    max-width: 15rem;
+    background: var(--c-plate);
+    border: 1px solid var(--c-line);
+    color: var(--c-ink-3);
+    overflow: hidden;
+  }
+  .mini :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6%;
+    mix-blend-mode: multiply;
+  }
+  .mini.captura {
+    background: #0d0f0e;
+  }
+  .mini.captura :global(img) {
+    object-fit: cover;
+    padding: 0;
+    mix-blend-mode: normal;
+  }
+  .mini :global(svg) {
+    width: 62%;
+  }
+  .comp tr.no-hover:hover {
+    background: none;
+  }
+  .comp tr.no-hover td,
+  .comp tr.no-hover th {
+    border-bottom: 0;
+  }
+  :global(.js) [data-mod]:not([data-current]) {
+    display: none;
+  }
+  [data-mod] + [data-mod] {
+    margin-top: 4rem;
+  }
+  :global(.js) [data-mod] + [data-mod] {
+    margin-top: 0;
+  }
+  [data-hide~='siemens'] .f-siemens,
+  [data-hide~='ge'] .f-ge,
+  [data-hide~='united'] .f-united,
+  [data-hide~='philips'] .f-philips {
+    display: none;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-controles]')!;
+  const radios = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-m]'));
+  const chips = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-f]'));
+  const secciones = Array.from(document.querySelectorAll<HTMLElement>('[data-mod]'));
+  const tablas = Array.from(document.querySelectorAll<HTMLElement>('[data-tabla]'));
+
+  const params = new URLSearchParams(location.search);
+  let mod = params.get('m') ?? radios[0].dataset.m!;
+  if (!radios.some((r) => r.dataset.m === mod)) mod = radios[0].dataset.m!;
+  const fParam = params.get('f');
+  const movil = matchMedia('(max-width: 767px)').matches;
+  // En celular se empieza con dos fabricantes para que quepan lado a lado.
+  let visibles = new Set(
+    fParam ? fParam.split(',') : chips.slice(0, movil ? 2 : chips.length).map((c) => c.dataset.f!),
+  );
+  if (visibles.size === 0) visibles = new Set(chips.map((c) => c.dataset.f!));
+
+  const sincronizarURL = () => {
+    const p = new URLSearchParams();
+    p.set('m', mod);
+    if (visibles.size < chips.length) p.set('f', [...visibles].join(','));
+    history.replaceState(null, '', `${location.pathname}?${p}`);
+  };
+
+  const pintar = (animar = false) => {
+    radios.forEach((r) => r.setAttribute('aria-checked', String(r.dataset.m === mod)));
+    secciones.forEach((s) => s.toggleAttribute('data-current', s.dataset.mod === mod));
+    chips.forEach((c) => c.setAttribute('aria-pressed', String(visibles.has(c.dataset.f!))));
+    const ocultos = chips.map((c) => c.dataset.f!).filter((f) => !visibles.has(f));
+    tablas.forEach((t) => t.setAttribute('data-hide', ocultos.join(' ')));
+    radios.find((r) => r.dataset.m === mod)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (animar) {
+      const actual = secciones.find((s) => s.dataset.mod === mod);
+      actual?.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], {
+        duration: 380,
+        easing: 'cubic-bezier(.2,.7,.2,1)',
+      });
+    }
+  };
+
+  radios.forEach((r) =>
+    r.addEventListener('click', () => {
+      mod = r.dataset.m!;
+      pintar(true);
+      sincronizarURL();
+    }),
+  );
+  root.querySelector('[role="radiogroup"]')!.addEventListener('keydown', (ev) => {
+    const e = ev as KeyboardEvent;
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const i = radios.findIndex((r) => r.dataset.m === mod);
+    const n = (i + (e.key === 'ArrowRight' ? 1 : -1) + radios.length) % radios.length;
+    mod = radios[n].dataset.m!;
+    pintar(true);
+    radios[n].focus();
+    sincronizarURL();
+  });
+  chips.forEach((c) =>
+    c.addEventListener('click', () => {
+      const f = c.dataset.f!;
+      if (visibles.has(f)) {
+        if (visibles.size === 1) return; // siempre al menos uno
+        visibles.delete(f);
+      } else visibles.add(f);
+      pintar();
+      sincronizarURL();
+    }),
+  );
+
+  pintar();
+</script>

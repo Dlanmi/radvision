@@ -1,0 +1,240 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import SectionHead from '../components/SectionHead.astro';
+import DotRange from '../components/DotRange.astro';
+import type { FilaDR } from '../components/DotRange.astro';
+import Siguiente from '../components/Siguiente.astro';
+import { fabricantePorId, modalidadPorId } from '../data';
+import { dosis, helio, tiempoRM } from '../data/indicadores';
+import type { Indicador } from '../data/indicadores';
+
+const texto = (i: Indicador) =>
+  i.tipo === 'sinDato'
+    ? '—'
+    : i.tipo === 'rango'
+      ? `${i.min}–${i.max} %`
+      : i.tipo === 'hasta'
+        ? `${i.max} %`
+        : `${i.max} %`;
+
+const aFila = (i: Indicador, grupo?: string): FilaDR => ({
+  etiqueta: `${fabricantePorId[i.fabricante].corto} · ${i.producto}`,
+  detalle: i.nota ? `${i.metrica} (${i.nota})` : i.metrica,
+  href: `/equipos/${i.slug}/`,
+  tipo: i.tipo,
+  min: i.min,
+  max: i.max,
+  valor: i.hasta ? `hasta ${texto(i)}` : texto(i),
+  grupo,
+});
+
+const filasDosis = dosis.map((i) => aFila(i, `${modalidadPorId[i.modalidad].codigo} · ${modalidadPorId[i.modalidad].nombre}`));
+const filasRM = tiempoRM.map((i) => aFila(i));
+const filasHelio: FilaDR[] = helio.map((h) => ({
+  etiqueta: h.etiqueta,
+  href: `/equipos/${h.slug}/`,
+  tipo: h.umbral ? 'umbral' : h.min === h.max ? 'valor' : 'rango',
+  min: h.min,
+  max: h.max,
+  valor: h.texto,
+  muted: h.fabricante === null,
+}));
+
+const conDato = dosis.filter((d) => d.tipo !== 'sinDato').length;
+// Philips Zenition aparece en dos filas (espinal y vascular).
+const tipoTexto = (d: Indicador) =>
+  d.tipo === 'rango' && d.hasta
+    ? 'Rango (máximo reportado)'
+    : ({ rango: 'Rango', hasta: 'Hasta (máximo)', valor: 'Valor', sinDato: 'Sin cifra' } as const)[d.tipo];
+---
+
+<Base title="Indicadores" description="Reducción de dosis y de tiempo de adquisición reportada por cada fabricante, y consumo de helio de los imanes de resonancia, en gráficas comparativas.">
+  <PageHead crumbs={[{ label: 'Indicadores' }]} kicker="Lectura gráfica del documento">
+    Indicadores
+    <Fragment slot="lead">
+      Las cifras de las fichas, puestas una al lado de la otra. Cada punto es el valor que el documento reporta para
+      ese equipo: un rango, un máximo («hasta») o un valor puntual.
+    </Fragment>
+  </PageHead>
+
+  <section class="border-t border-line bg-bg-2 py-16 md:py-24 [--sfc:var(--c-bg-2)]" aria-labelledby="dosis-h">
+    <div class="wrap grid gap-10 lg:grid-cols-12 lg:gap-8">
+      <header class="lg:col-span-4">
+        <div class="lg:sticky lg:top-[calc(var(--header-h)+2rem)]">
+          <p class="label text-accent-ink">Indicador 01</p>
+          <h2 id="dosis-h" class="h-section mt-4" data-split>Reducción de dosis <em>reportada</em></h2>
+          <p class="mt-5 text-ink-2">
+            Porcentaje de reducción reportado. La referencia de comparación cambia según el equipo (técnica sin IA,
+            rejilla física, arcos tradicionales…). {conDato} de las {dosis.length} filas de radiografía, fluoroscopia, arco en C,
+            tomografía y PET/CT tienen una cifra.
+          </p>
+          <ul class="mt-6 space-y-2 text-[0.875rem] text-ink-2" aria-label="Leyenda">
+            <li class="flex items-center gap-3"><i class="k-rango" aria-hidden="true"></i>Rango reportado</li>
+            <li class="flex items-center gap-3"><i class="k-hasta" aria-hidden="true"></i>«Hasta»: máximo reportado</li>
+            <li class="flex items-center gap-3"><i class="k-valor" aria-hidden="true"></i>Valor puntual</li>
+          </ul>
+          <p class="mt-6 border-l-2 border-warn pl-4 text-[0.875rem] text-ink-2">
+            Cada fabricante mide algo distinto (DAP, tasa de dosis, dosis efectiva, actividad del radiofármaco). Compara
+            dentro de cada modalidad y lee la métrica de cada fila.
+          </p>
+        </div>
+      </header>
+      <div class="lg:col-span-8" data-reveal="up">
+        <DotRange
+          filas={filasDosis}
+          dominio={[0, 100]}
+          ticks={[0, 25, 50, 75, 100]}
+          unidad=" %"
+          caption="Reducción de dosis reportada por equipo, agrupada por modalidad."
+        />
+        <details class="tabla-datos mt-8">
+          <summary class="label">Ver como tabla</summary>
+          <div class="scroll-x mt-4">
+            <table class="tabla min-w-[640px]">
+              <thead>
+                <tr><th>Modalidad</th><th>Equipo</th><th>Métrica</th><th>Tipo</th><th>Valor</th></tr>
+              </thead>
+              <tbody>
+                {
+                  dosis.map((d) => (
+                    <tr>
+                      <td class="label text-ink-3">{modalidadPorId[d.modalidad].codigo}</td>
+                      <td>{fabricantePorId[d.fabricante].corto} · {d.producto}</td>
+                      <td class="text-ink-2">{d.metrica}</td>
+                      <td class="text-ink-2">{tipoTexto(d)}</td>
+                      <td class="tnum font-semibold">{d.tipo === 'hasta' || d.hasta ? `hasta ${texto(d)}` : texto(d)}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 md:py-24" aria-labelledby="rm-h">
+    <div class="wrap grid gap-10 lg:grid-cols-12 lg:gap-8">
+      <header class="lg:col-span-4">
+        <p class="label text-accent-ink">Indicador 02</p>
+        <h2 id="rm-h" class="h-section mt-4" data-split>Resonancia <em>más rápida</em></h2>
+        <p class="mt-5 text-ink-2">
+          Reducción del tiempo de adquisición con reconstrucción por deep learning. Un estudio más corto deposita menos
+          energía de radiofrecuencia en total y tiene menos artefactos por movimiento del paciente.
+        </p>
+      </header>
+      <div class="lg:col-span-8" data-reveal="up">
+        <DotRange
+          filas={filasRM}
+          dominio={[0, 100]}
+          ticks={[0, 25, 50, 75, 100]}
+          unidad=" %"
+          caption="Reducción del tiempo de adquisición en resonancia magnética por fabricante."
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="border-t border-line bg-film py-16 text-film-ink md:py-24 [--sfc:var(--c-film)]" aria-labelledby="helio-h">
+    <div class="wrap">
+      <SectionHead kicker="Indicador 03" dark>
+        <span id="helio-h">Helio líquido: <em>de miles de litros a menos de uno.</em></span>
+        <Fragment slot="lead">
+          Los imanes sellados (DryCool de Siemens, BlueSeal de Philips) eliminan el tubo de quench; en el caso de BlueSeal,
+          el documento destaca que permite instalar la resonancia en pisos superiores. La escala es logarítmica: cada marca
+          del eje multiplica por diez.
+        </Fragment>
+      </SectionHead>
+      <div class="helio mt-12 md:mt-16" data-reveal="up">
+        <DotRange
+          filas={filasHelio}
+          dominio={[0.1, 10000]}
+          ticks={[0.1, 1, 10, 100, 1000, 10000]}
+          escala="log"
+          formatoTick="miles"
+          unidad=" L"
+          caption="Litros de helio líquido por imán: 0.7 L (MAGNETOM Flow), 7 L (MR 5300 BlueSeal), más de 1,000 L y 1,500 a 2,000 L en imanes convencionales."
+        />
+      </div>
+    </div>
+  </section>
+
+  <Siguiente desde="indicadores" />
+</Base>
+
+<style>
+  .k-rango,
+  .k-hasta,
+  .k-valor {
+    position: relative;
+    display: inline-block;
+    width: 28px;
+    height: 12px;
+  }
+  .k-rango::before {
+    content: '';
+    position: absolute;
+    inset: 4px 3px;
+    background: var(--c-chart);
+    border-radius: 2px;
+  }
+  .k-rango::after,
+  .k-hasta::after,
+  .k-valor::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--c-chart);
+  }
+  .k-rango::after {
+    box-shadow: -16px 0 0 var(--c-chart);
+  }
+  .k-hasta::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 6px;
+    top: 5px;
+    border-top: 2px dashed var(--c-chart);
+  }
+  .k-valor::after {
+    right: 8px;
+  }
+  .tabla-datos summary {
+    cursor: pointer;
+    color: var(--c-ink-2);
+    list-style: none;
+  }
+  .tabla-datos summary::before {
+    content: '+ ';
+  }
+  .tabla-datos[open] summary::before {
+    content: '− ';
+  }
+  .helio :global(.row) {
+    border-color: var(--c-film-line);
+  }
+  .helio :global(.gl) {
+    background: var(--c-film-line);
+  }
+  .helio :global(.val),
+  .helio :global(.lbl a),
+  .helio :global(.lbl span) {
+    color: var(--c-film-ink);
+  }
+  .helio :global(.ticks) {
+    color: var(--c-film-ink-2);
+  }
+  .helio :global(.dr) {
+    --c: var(--c-accent);
+  }
+  .helio :global(.row.muted) {
+    --c: var(--c-film-ink-2);
+  }
+</style>

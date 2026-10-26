@@ -1,0 +1,192 @@
+---
+import { Image } from 'astro:assets';
+import Schematic from './Schematic.astro';
+import { fotosDe } from '../data/fotos';
+import type { ModalidadId } from '../data/types';
+
+interface Props {
+  /** Slug del equipo (o clave `sw-…`) para buscar fotos. */
+  clave: string;
+  modalidad: ModalidadId;
+  fig: string;
+  codigo: string;
+  nombre: string;
+}
+const { clave, modalidad, fig, codigo, nombre } = Astro.props;
+const lista = fotosDe(clave);
+const uid = `fig-${clave}`;
+const vistas = [
+  ...lista.map((f, i) => ({
+    id: `foto-${i}`,
+    label: lista.length > 1 ? (f.producto.split(' · ')[1] ?? f.producto) : 'Fotografía',
+  })),
+  { id: 'esquema', label: 'Esquema' },
+];
+---
+
+<figure class="fig" data-fig>
+  {
+    vistas.length > 1 && (
+      <div class="fig-tabs" role="tablist" aria-label={`Vistas de ${nombre}`}>
+        {vistas.map((v, i) => (
+          <button
+            type="button"
+            role="tab"
+            id={`${uid}-t-${v.id}`}
+            aria-controls={`${uid}-${v.id}`}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            tabindex={i === 0 ? 0 : -1}
+            data-fig-tab={v.id}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  <div class="fig-stage crop">
+    {
+      lista.map((f, i) => (
+        <div
+          class:list={['plate', f.captura && 'captura']}
+          id={`${uid}-foto-${i}`}
+          role="tabpanel"
+          aria-labelledby={`${uid}-t-foto-${i}`}
+          data-fig-view={`foto-${i}`}
+          data-active={i === 0 ? '' : undefined}
+          data-credito={f.credito}
+          data-producto={f.producto}
+        >
+          <Image
+            src={f.img}
+            alt={f.alt}
+            widths={[480, 800, 1200]}
+            sizes="(min-width: 1024px) 34vw, 92vw"
+            loading={i === 0 ? 'eager' : 'lazy'}
+            class="plate-img"
+          />
+        </div>
+      ))
+    }
+    <div
+      class="plate esquema"
+      id={`${uid}-esquema`}
+      role={vistas.length > 1 ? 'tabpanel' : undefined}
+      aria-labelledby={vistas.length > 1 ? `${uid}-t-esquema` : undefined}
+      data-fig-view="esquema"
+      data-active={lista.length === 0 ? '' : undefined}
+      data-credito=""
+      data-producto="Esquema ilustrativo"
+    >
+      <Schematic id={modalidad} title={`Esquema: ${nombre}`} draw />
+    </div>
+  </div>
+
+  <figcaption class="label mt-3 flex flex-col gap-1 text-ink-3 sm:flex-row sm:justify-between sm:gap-4">
+    <span class="shrink-0">Fig. {fig} — {codigo}</span>
+    <span class="min-w-0 normal-case tracking-normal sm:text-right" data-fig-cap>
+      {lista[0] ? `${lista[0].producto} · Imagen: ${lista[0].credito}` : 'Esquema ilustrativo'}
+    </span>
+  </figcaption>
+</figure>
+
+<style>
+  .fig-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-bottom: 0.6rem;
+  }
+  .fig-tabs button {
+    height: 2rem;
+    padding-inline: 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--c-ink-3);
+    border: 1px solid var(--c-line);
+    cursor: pointer;
+    transition:
+      color 0.2s,
+      background-color 0.2s,
+      border-color 0.2s;
+  }
+  .fig-tabs button:hover {
+    color: var(--c-ink);
+    border-color: var(--c-line-strong);
+  }
+  .fig-tabs button[aria-selected='true'] {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-bg);
+  }
+  .fig-stage {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    color: var(--c-ink-3);
+  }
+  .plate {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: var(--c-plate);
+    border: 1px solid var(--c-line);
+    overflow: hidden;
+  }
+  .plate:not([data-active]) {
+    display: none;
+  }
+  .plate :global(.plate-img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 5%;
+    mix-blend-mode: multiply;
+  }
+  .plate.captura {
+    background: #0d0f0e;
+  }
+  .plate.captura :global(.plate-img) {
+    padding: 0;
+    object-fit: cover;
+    mix-blend-mode: normal;
+  }
+  .plate.esquema {
+    background: transparent;
+    padding: 8%;
+    color: var(--c-ink-2);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-fig]').forEach((fig) => {
+    const tabs = Array.from(fig.querySelectorAll<HTMLButtonElement>('[data-fig-tab]'));
+    const vistas = Array.from(fig.querySelectorAll<HTMLElement>('[data-fig-view]'));
+    const cap = fig.querySelector<HTMLElement>('[data-fig-cap]');
+    const activar = (i: number, foco = false) => {
+      tabs.forEach((t, k) => {
+        t.setAttribute('aria-selected', String(k === i));
+        t.tabIndex = k === i ? 0 : -1;
+      });
+      const id = tabs[i].dataset.figTab;
+      vistas.forEach((v) => v.toggleAttribute('data-active', v.dataset.figView === id));
+      const v = vistas.find((x) => x.dataset.figView === id);
+      if (cap && v) cap.textContent = v.dataset.credito ? `${v.dataset.producto} · Imagen: ${v.dataset.credito}` : `${v.dataset.producto}`;
+      if (foco) tabs[i].focus();
+      v?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: 'ease-out' });
+      v?.dispatchEvent(new CustomEvent('fig:mostrar', { bubbles: true }));
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => activar(i));
+      t.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') activar((i + 1) % tabs.length, true);
+        if (e.key === 'ArrowLeft') activar((i - 1 + tabs.length) % tabs.length, true);
+      });
+    });
+  });
+</script>

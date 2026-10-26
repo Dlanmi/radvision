@@ -1,0 +1,419 @@
+---
+import Base from '../layouts/Base.astro';
+import Viewer from '../components/Viewer.astro';
+import SenaLogo from '../components/SenaLogo.astro';
+import Schematic from '../components/Schematic.astro';
+import SectionHead from '../components/SectionHead.astro';
+import { equipoPorSlug, equipos, equiposDe, equiposEn, fabricantePorId, fabricantes, modalidades, nn, nombreCorto } from '../data';
+import { criterios, presentacion, proyecto } from '../data/proyecto';
+import { modulos } from '../data/software';
+import { ruta } from '../data/ruta';
+
+const stats = [
+  { v: equipos.length, l: 'Fichas de equipos' },
+  { v: modalidades.length, l: 'Modalidades' },
+  { v: fabricantes.length, l: 'Fabricantes' },
+  { v: modulos.length, l: 'Módulos de software' },
+  { v: criterios.length, l: 'Criterios técnicos' },
+];
+
+// Cifras destacadas: [slug, índice de la cifra]
+const destacadas = (
+  [
+    ['united-tac', 0],
+    ['siemens-pet', 0],
+    ['philips-tac', 1],
+    ['ge-rx', 0],
+    ['philips-arco-c', 0],
+    ['ge-rm', 0],
+  ] as const
+).map(([slug, k, producto]: readonly [string, number, string?]) => {
+  const e = equipoPorSlug(slug)!;
+  return { e, c: e.cifras[k], f: fabricantePorId[e.fabricante], producto: producto ?? nombreCorto(e) };
+});
+---
+
+<Base>
+  <!-- ── Hero ─────────────────────────────────────────────────── -->
+  <section class="wrap pt-12 pb-14 md:pt-20 md:pb-20">
+
+    <div class="grid items-end gap-10 lg:grid-cols-12 lg:gap-8">
+      <div class="lg:col-span-7">
+        <h1 class="display text-[clamp(2.6rem,1.1rem+4.7vw,5.6rem)]" data-split data-now>
+          Inteligencia artificial, <em class="text-accent-ink">de la consola al informe.</em>
+        </h1>
+        <p class="mt-8 max-w-[52ch] text-[1.125rem] text-ink-2 md:text-[1.25rem] md:leading-[1.5]" data-reveal="up" data-delay="0.35">
+          Catálogo técnico de {equipos.length} fichas de equipos de imagen diagnóstica con algoritmos autorizados por la
+          FDA, evaluadas con cinco criterios técnicos y una perspectiva interdisciplinaria: física médica e ingenierías
+          biomédica, industrial, eléctrica y mecánica.
+        </p>
+        <div class="mt-10 flex flex-wrap gap-3" data-reveal="up" data-delay="0.5">
+          <a href="/modalidades/" class="btn btn-solid">Explorar modalidades <span class="arrow">→</span></a>
+          <a href="/comparador/" class="btn btn-ghost">Comparar fabricantes</a>
+        </div>
+        <a href="/proyecto/" class="sena mt-12 flex max-w-[30rem] items-center gap-4 border-t border-line pt-6" data-reveal="up" data-delay="0.6">
+          <SenaLogo size={52} class="size-[52px] shrink-0" />
+          <span class="text-[0.875rem] leading-snug text-ink-2">
+            <span class="block font-semibold text-ink">Proyecto formativo SENA</span>
+            {proyecto.programa} · Ficha SENA {proyecto.ficha}
+          </span>
+        </a>
+      </div>
+      <div class="lg:col-span-5" data-reveal="up" data-delay="0.2">
+        <Viewer />
+      </div>
+    </div>
+
+    <dl class="mt-14 grid grid-cols-2 border-t border-ink sm:grid-cols-3 md:mt-20 lg:grid-cols-5" data-reveal="stagger">
+      {
+        stats.map((s, i) => (
+          <div class:list={['border-line py-5 pr-4', i > 0 && 'lg:border-l lg:pl-5', i % 2 === 1 && 'border-l pl-5 sm:border-l-0 sm:pl-0', i === stats.length - 1 && 'col-span-2 sm:col-span-1', 'border-b lg:border-b-0']}>
+            <dt class="label text-ink-3">{s.l}</dt>
+            <dd class="display mt-3 text-[clamp(2.25rem,1.7rem+1.8vw,3.4rem)]" data-count>
+              {nn(s.v)}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <!-- ── Recorrido sugerido ───────────────────────────────────── -->
+  <section class="border-y border-line bg-bg-2" aria-labelledby="ruta-h">
+    <div class="wrap py-14 md:py-20">
+      <p class="label flex items-center gap-3 text-ink-3"><span class="text-accent-ink">00</span> Empieza aquí</p>
+      <h2 id="ruta-h" class="h-section mt-5 max-w-[22ch]" data-split>
+        ¿Por dónde empezar? <em>Sigue este recorrido.</em>
+      </h2>
+      <ol class="ruta mt-10 grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-reveal="stagger">
+        {
+          ruta.map((p, i) => (
+            <li>
+              <a href={p.href} class="paso flex h-full flex-col">
+                <span class="nodo label tnum">{nn(i + 1)}</span>
+                <span class="mt-5 block text-[1.0625rem] font-semibold leading-snug">{p.titulo}</span>
+                <span class="mt-2 block text-[0.9375rem] text-ink-2">{p.texto}</span>
+                <span class="label mt-auto flex items-center gap-2 pt-6 text-ink">
+                  {p.cta} <span class="go">→</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="mt-8 max-w-[70ch] text-[0.9375rem] text-ink-2">
+        ¿Una sigla que no conoces? Los términos con{' '}
+        <span class="underline decoration-accent decoration-dotted decoration-[1.5px] underline-offset-4">subrayado punteado</span>{' '}
+        muestran su definición al pasar el cursor o al tocarlos, y todos están reunidos en el{' '}
+        <a href="/glosario/" class="link-u text-ink">glosario</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Índice de modalidades ────────────────────────────────── -->
+  <section class="wrap py-16 md:py-28" id="modalidades">
+    <SectionHead n="01" kicker="Índice">
+      Ocho modalidades, <em>cuatro equipos</em> en cada una.
+      <Fragment slot="lead">
+        Elige una modalidad para ver los equipos de los cuatro fabricantes lado a lado, o abre directamente la ficha
+        técnica de cada uno.
+      </Fragment>
+    </SectionHead>
+
+    <ol class="mt-12 border-t border-ink md:mt-16">
+      {
+        modalidades.map((m, i) => {
+          const lista = equiposEn(m.id);
+          return (
+            <li class="mod-row border-b border-line" data-reveal="up">
+              <a href={`/modalidades/${m.id}/`} data-redraw class="grid grid-cols-[2.5rem_1fr_auto] items-start gap-x-4 gap-y-3 py-6 md:grid-cols-[3rem_5.5rem_1.2fr_1fr_6rem_2rem] md:items-center md:gap-x-6 md:py-7">
+                <span class="label tnum pt-1 text-ink-3 md:pt-0">{nn(i + 1)}</span>
+                <span class="label hidden md:block">
+                  <span class="code">{m.codigo}</span>
+                </span>
+                <span>
+                  <span class="h-sub mod-name block">{m.nombre}</span>
+                  <span class="mt-1 block text-[0.9375rem] text-ink-2 md:hidden">{m.resumen}</span>
+                </span>
+                <span class="label col-start-2 row-start-2 hidden space-y-1 text-ink-3 md:col-auto md:row-auto md:block">
+                  {lista.map((e) => (
+                    <span class="block truncate normal-case tracking-normal">
+                      <span class="text-ink-2">{fabricantePorId[e.fabricante].corto}</span> — {nombreCorto(e)}
+                    </span>
+                  ))}
+                </span>
+                <span class="mod-thumb hidden text-ink-3 md:block">
+                  <Schematic id={m.id} annotate={false} />
+                </span>
+                <span class="mod-arrow self-center text-right text-[1.25rem]" aria-hidden="true">
+                  →
+                </span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+
+  <!-- ── Cifras ───────────────────────────────────────────────── -->
+  <section class="bg-film py-16 text-film-ink md:py-28">
+    <div class="wrap">
+      <SectionHead n="02" kicker="En números" dark>
+        Lo que cambia cuando el algoritmo <em>vive dentro del equipo.</em>
+      </SectionHead>
+
+      <ul class="mt-12 grid border-t border-film-line sm:grid-cols-2 md:mt-16 lg:grid-cols-3" data-reveal="stagger">
+        {
+          destacadas.map(({ e, c, f, producto }, i) => (
+            <li class:list={['cifra border-b border-film-line', i % 3 !== 0 && 'lg:border-l', i % 2 === 1 && 'sm:border-l lg:border-l', i % 3 === 0 && 'lg:border-l-0']}>
+              <a href={`/equipos/${e.slug}/`} class="flex h-full flex-col p-6 md:p-8">
+                <span class="label text-film-ink-2">{nn(i + 1)} · {c.tipo}</span>
+                <span class="display mt-8 text-[clamp(2.75rem,2rem+2.6vw,4.5rem)] text-film-ink">
+                  {c.hasta && <span class="hasta">hasta</span>}
+                  <span data-count>{c.valor}</span>
+                  {c.unidad && <span class="unidad">{c.unidad}</span>}
+                </span>
+                <span class="mt-3 max-w-[28ch] text-[1.0625rem] text-film-ink">{c.texto}</span>
+                <span class="label mt-auto flex items-center justify-between gap-4 pt-10 text-film-ink-2">
+                  <span class="truncate">
+                    {f.corto} · {producto}
+                  </span>
+                  <span class="go">→</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── Fabricantes ──────────────────────────────────────────── -->
+  <section class="wrap py-16 md:py-28">
+    <SectionHead n="03" kicker="Fabricantes">
+      Cuatro fabricantes, <em>ocho modalidades</em> cada uno.
+    </SectionHead>
+
+    <ul class="mt-12 grid gap-px border border-line bg-line sm:grid-cols-2 md:mt-16 lg:grid-cols-4" data-reveal="stagger">
+      {
+        fabricantes.map((f, i) => (
+          <li class="fab bg-bg">
+            <a href={`/fabricantes/${f.id}/`} class="flex h-full flex-col p-6 md:p-7">
+              <span class="label flex justify-between text-ink-3">
+                <span>{nn(i + 1)}</span>
+                <span>{f.sede}</span>
+              </span>
+              <span class="h-sub mt-10 block">{f.nombre}</span>
+              <span class="mt-4 block text-[0.9375rem] text-ink-2">{f.enfoque}</span>
+              <span class="label mt-auto flex items-center justify-between pt-10">
+                <span>{equiposDe(f.id).length} equipos</span>
+                <span class="go">→</span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- ── Criterios ────────────────────────────────────────────── -->
+  <section class="border-t border-line bg-bg-2 py-16 md:py-28">
+    <div class="wrap">
+      <SectionHead n="04" kicker="Método">
+        Cinco criterios para <em>leer cada equipo.</em>
+        <Fragment slot="lead">{presentacion}</Fragment>
+      </SectionHead>
+
+      <ol class="mt-12 grid gap-px md:mt-16 md:grid-cols-5" data-reveal="stagger">
+        {
+          criterios.map((c) => (
+            <li class="border-t border-ink pt-5 pb-8 md:pr-6">
+              <span class="display text-[2.25rem] text-accent-ink">{nn(c.n)}</span>
+              <h3 class="mt-4 text-[1.125rem] font-semibold leading-snug">{c.titulo}</h3>
+              <p class="mt-2 text-[0.9375rem] text-ink-2">{c.texto}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── Más allá del equipo ──────────────────────────────────── -->
+  <section class="wrap py-16 md:py-28">
+    <SectionHead n="05" kicker="Más allá del equipo">
+      La IA también <em>lee, mide y organiza.</em>
+    </SectionHead>
+
+    <div class="mt-12 grid gap-6 md:mt-16 lg:grid-cols-2">
+      <a href="/software/" class="panel group flex flex-col border border-ink p-6 md:p-10" data-reveal="up">
+        <span class="label text-ink-3">Software de lectura · Siemens Healthineers</span>
+        <span class="h-sub mt-6 block">AI-Rad Companion</span>
+        <span class="mt-3 block max-w-[46ch] text-ink-2">
+          Segundo lector para tórax y próstata. Con su asistencia, el acuerdo entre lectores no expertos en PI-RADS
+          pasa de moderado a sustancial.
+        </span>
+        <span class="display mt-10 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[clamp(1.9rem,1.4rem+1.7vw,3.1rem)]">
+          <span class="text-ink-3">0.52–0.60</span>
+          <span class="text-[0.5em]">→</span>
+          <span class="text-accent-ink">0.76–0.82</span>
+        </span>
+        <span class="text-ink-2">índice Kappa (κ) sin IA → con AI-Rad Companion</span>
+        <span class="label mt-auto flex justify-between pt-10">
+          <span>Ver métricas</span><span class="go">→</span>
+        </span>
+      </a>
+      <a href="/orquestacion/" class="panel panel-dark group flex flex-col bg-film p-6 text-film-ink md:p-10" data-reveal="up" data-delay="0.1">
+        <span class="label text-film-ink-2">Orquestación · AGFA Enterprise Imaging</span>
+        <span class="h-sub mt-6 block">Un solo punto de entrada para todos los algoritmos</span>
+        <span class="mt-3 block max-w-[46ch] text-film-ink-2">
+          El orquestador decide qué motor de IA procesa cada estudio y devuelve los hallazgos al visor del radiólogo.
+        </span>
+        <span class="display mt-10 flex items-baseline gap-3 text-[clamp(2.4rem,1.7rem+2.2vw,3.75rem)]">
+          20–35<span class="text-[0.45em]"> %</span>
+        </span>
+        <span class="text-film-ink-2">menos tiempo de redacción del informe</span>
+        <span class="label mt-auto flex justify-between pt-10">
+          <span>Ver el flujo</span><span class="go">→</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── CTA comparador ───────────────────────────────────────── -->
+  <section class="border-t border-ink">
+    <a href="/comparador/" class="cta wrap flex flex-col gap-8 py-16 md:flex-row md:items-end md:justify-between md:py-24">
+      <span class="display block max-w-[18ch] text-[clamp(2.1rem,1.2rem+3.4vw,4.4rem)]" data-split>
+        Pon a los cuatro fabricantes <em>frente a frente.</em>
+      </span>
+      <span class="btn btn-solid shrink-0 self-start md:self-end">Abrir comparador <span class="arrow">→</span></span>
+    </a>
+  </section>
+</Base>
+
+<style>
+  .code {
+    display: inline-block;
+    min-width: 3.25rem;
+    padding: 0.3rem 0.45rem;
+    border: 1px solid var(--c-line-strong);
+    text-align: center;
+    transition:
+      background-color 0.25s,
+      color 0.25s,
+      border-color 0.25s;
+  }
+  .mod-row a {
+    transition: background-color 0.25s;
+  }
+  .mod-name {
+    transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .mod-thumb {
+    width: 6rem;
+    opacity: 0.55;
+    transition:
+      opacity 0.3s,
+      color 0.3s;
+  }
+  .mod-arrow,
+  .go {
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  @media (hover: hover) {
+    .mod-row a:hover {
+      background: var(--c-bg-2);
+    }
+    .mod-row a:hover .mod-name {
+      transform: translateX(0.5rem);
+      color: var(--c-accent-ink);
+    }
+    .mod-row a:hover .code {
+      background: var(--c-ink);
+      color: var(--c-bg);
+      border-color: var(--c-ink);
+    }
+    .mod-row a:hover .mod-thumb {
+      opacity: 1;
+      color: var(--c-ink);
+    }
+    .mod-row a:hover .mod-arrow,
+    a:hover .go {
+      transform: translateX(6px);
+    }
+    .cifra a:hover {
+      background: var(--c-film-2);
+    }
+    .fab a:hover {
+      background: var(--c-bg-2);
+    }
+    .panel:hover {
+      background: var(--c-bg-2);
+    }
+    .panel-dark:hover {
+      background: var(--c-film-2);
+    }
+    .cta:hover .btn {
+      background: var(--c-accent);
+      border-color: var(--c-accent);
+      color: #0d0f0e;
+    }
+  }
+  .hasta {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    margin-right: 0.5rem;
+    vertical-align: 0.9em;
+    color: var(--c-film-ink-2);
+  }
+  .ruta {
+    position: relative;
+    border-top: 1px solid var(--c-ink);
+  }
+  .paso {
+    padding: 1.5rem 1.5rem 1.75rem 0;
+    border-bottom: 1px solid var(--c-line);
+    transition: background-color 0.25s;
+  }
+  .nodo {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--c-ink);
+    border-radius: 50%;
+    background: var(--c-bg-2);
+    transition:
+      background-color 0.25s,
+      color 0.25s,
+      border-color 0.25s;
+  }
+  @media (min-width: 80rem) {
+    .ruta::before {
+      content: '';
+      position: absolute;
+      top: calc(1.5rem + 1.125rem);
+      left: 0;
+      right: 0;
+      border-top: 1px dashed var(--c-line-strong);
+    }
+    .ruta li {
+      position: relative;
+    }
+    .paso {
+      border-bottom: 0;
+    }
+  }
+  @media (hover: hover) {
+    .paso:hover .nodo {
+      background: var(--c-accent);
+      border-color: var(--c-accent);
+      color: #0d0f0e;
+    }
+  }
+  .unidad {
+    font-size: 0.42em;
+    margin-left: 0.12em;
+    color: var(--c-film-ink-2);
+  }
+</style>

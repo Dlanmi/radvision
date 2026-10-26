@@ -1,0 +1,328 @@
+---
+/**
+ * Gráfica de puntos y rangos (una serie, filas agrupables). Construida en HTML para que el
+ * texto no escale con la gráfica. Cada fila declara cómo se reportó el valor.
+ */
+export type TipoFila = 'rango' | 'hasta' | 'valor' | 'umbral' | 'sinDato';
+
+export interface FilaDR {
+  etiqueta: string;
+  detalle?: string;
+  href?: string;
+  tipo: TipoFila;
+  min?: number;
+  max?: number;
+  /** Texto del valor, p. ej. "40–60 %". */
+  valor: string;
+  nota?: string;
+  muted?: boolean;
+  grupo?: string;
+}
+
+interface Props {
+  filas: FilaDR[];
+  dominio: [number, number];
+  ticks: number[];
+  caption: string;
+  unidad?: string;
+  escala?: 'lineal' | 'log';
+  /** Etiqueta encima de la pista (columnas estrechas). */
+  stacked?: boolean;
+  formatoTick?: 'entero' | 'decimal' | 'miles';
+}
+
+const {
+  filas,
+  dominio,
+  ticks,
+  caption,
+  unidad = '',
+  escala = 'lineal',
+  stacked = false,
+  formatoTick = 'entero',
+} = Astro.props;
+const [d0, d1] = dominio;
+const pct = (v: number) =>
+  escala === 'log'
+    ? ((Math.log10(v) - Math.log10(d0)) / (Math.log10(d1) - Math.log10(d0))) * 100
+    : ((v - d0) / (d1 - d0)) * 100;
+const fmt = (t: number) =>
+  formatoTick === 'decimal' ? t.toFixed(1) : formatoTick === 'miles' ? t.toLocaleString('en-US') : String(t);
+
+const filasConGrupo = filas.map((f, i) => ({ ...f, nuevoGrupo: f.grupo && f.grupo !== filas[i - 1]?.grupo }));
+---
+
+<figure class:list={['dr', stacked && 'stacked']} data-dr>
+  <figcaption class="sr-only">{caption}</figcaption>
+  <div role="list">
+    {
+      filasConGrupo.map((f) => {
+        const a = f.tipo === 'hasta' ? 0 : pct(f.min ?? 0);
+        const b = f.tipo === 'umbral' ? 100 : pct(f.max ?? f.min ?? 0);
+        const fin = f.tipo === 'umbral' ? pct(f.min ?? 0) : b;
+        const etiquetaIzq = fin > 78;
+        return (
+          <>
+            {f.nuevoGrupo && (
+              <div class="grupo label" role="presentation">
+                {f.grupo}
+              </div>
+            )}
+            <div
+              class:list={['row', f.muted && 'muted', f.tipo === 'sinDato' && 'vacio']}
+              role="listitem"
+              tabindex={f.tipo === 'sinDato' ? undefined : 0}
+              data-tip-v={f.tipo === 'sinDato' ? undefined : f.valor}
+              data-tip-l={[f.etiqueta, f.detalle, f.nota].filter(Boolean).join(' · ')}
+              aria-label={`${f.etiqueta}${f.detalle ? `, ${f.detalle}` : ''}: ${f.tipo === 'sinDato' ? 'sin cifra en el documento' : f.valor}`}
+            >
+              <div class="lbl">
+                {f.href ? (
+                  <a href={f.href} class="link-u block text-[0.9375rem] leading-tight">
+                    {f.etiqueta}
+                  </a>
+                ) : (
+                  <span class="block text-[0.9375rem] leading-tight">{f.etiqueta}</span>
+                )}
+                {f.detalle && <span class="mt-1 block text-[0.8125rem] leading-snug text-ink-3">{f.detalle}</span>}
+              </div>
+              <div class="track">
+                {ticks.map((t) => (
+                  <i class="gl" style={`left:${pct(t)}%`} />
+                ))}
+                {f.tipo === 'sinDato' ? (
+                  <span class="sin label">Sin cifra en el documento</span>
+                ) : (
+                  <>
+                    {f.tipo === 'rango' && <span class="seg" style={`left:${a}%;width:${Math.max(b - a, 0)}%`} />}
+                    {f.tipo === 'hasta' && <span class="seg dash" style={`left:0;width:${b}%`} />}
+                    {f.tipo === 'umbral' && <span class="seg fade" style={`left:${fin}%;width:${100 - fin}%`} />}
+                    {f.tipo === 'rango' && <span class="dot" style={`left:${a}%`} />}
+                    <span class="dot" style={`left:${fin}%`} />
+                    <span
+                      class:list={['val', etiquetaIzq && 'izq']}
+                      style={etiquetaIzq ? `right:${100 - (f.tipo === 'rango' ? a : fin)}%` : `left:${fin}%`}
+                    >
+                      {f.tipo === 'hasta' && <span class="hasta">hasta</span>}
+                      {f.valor}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      })
+    }
+  </div>
+  <div class="axis" aria-hidden="true">
+    <span></span>
+    <div class="ticks">
+      {
+        ticks.map((t, i) => (
+          <span
+            class:list={['label', i === 0 && 'primero', i === ticks.length - 1 && 'ultimo']}
+            style={`left:${pct(t)}%`}
+          >
+            {fmt(t)}
+            {unidad}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</figure>
+
+<div class="dr-tip" data-dr-tip hidden>
+  <strong data-tv></strong>
+  <span data-tl></span>
+</div>
+
+<style>
+  .dr {
+    --lbl: 14rem;
+    --c: var(--c-chart);
+  }
+  .grupo {
+    padding: 1.4rem 0 0.5rem;
+    color: var(--c-ink);
+    border-bottom: 1px solid var(--c-ink);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: var(--lbl) 1fr;
+    align-items: center;
+    gap: 1.25rem;
+    padding-block: 0.55rem;
+    border-bottom: 1px solid var(--c-line);
+    outline-offset: 4px;
+  }
+  .row.muted {
+    --c: var(--c-chart-muted);
+  }
+  .track {
+    position: relative;
+    height: 2.5rem;
+  }
+  .gl {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--c-line);
+  }
+  .seg {
+    position: absolute;
+    top: 50%;
+    height: 4px;
+    translate: 0 -50%;
+    border-radius: 2px;
+    background: var(--c);
+  }
+  .seg.dash {
+    height: 0;
+    border-top: 2px dashed color-mix(in oklab, var(--c) 70%, transparent);
+    background: none;
+    border-radius: 0;
+  }
+  .seg.fade {
+    background: linear-gradient(90deg, var(--c), transparent);
+  }
+  .dot {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: var(--c);
+    box-shadow: 0 0 0 2px var(--sfc, var(--c-bg));
+    transition: scale 0.2s;
+  }
+  .val {
+    position: absolute;
+    top: 50%;
+    translate: 0.75rem -50%;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--c-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .val.izq {
+    translate: -0.75rem -50%;
+    padding-inline: 0.35rem;
+    background: var(--sfc, var(--c-bg));
+  }
+  .hasta {
+    font-weight: 400;
+    color: var(--c-ink-3);
+    margin-right: 0.3em;
+  }
+  .sin {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    translate: 0 -50%;
+    color: var(--c-ink-3);
+    font-size: 0.625rem;
+  }
+  .vacio .lbl {
+    opacity: 0.6;
+  }
+  .row:hover .dot,
+  .row:focus-visible .dot {
+    scale: 1.3;
+  }
+  .axis {
+    display: grid;
+    grid-template-columns: var(--lbl) 1fr;
+    gap: 1.25rem;
+    margin-top: 0.6rem;
+  }
+  .ticks {
+    position: relative;
+    height: 1rem;
+    color: var(--c-ink-3);
+  }
+  .ticks span {
+    position: absolute;
+    translate: -50% 0;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  /* Los extremos se alinean hacia adentro para no salirse de la pista. */
+  .ticks .primero {
+    translate: 0 0;
+  }
+  .ticks .ultimo {
+    translate: -100% 0;
+  }
+  .stacked .row,
+  .stacked .axis {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+  .stacked .axis > span:first-child {
+    display: none;
+  }
+  @media (max-width: 639px) {
+    .row,
+    .axis {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+    .axis > span:first-child {
+      display: none;
+    }
+  }
+  .dr-tip {
+    position: fixed;
+    z-index: 60;
+    display: grid;
+    gap: 2px;
+    padding: 0.55rem 0.75rem;
+    background: var(--c-film);
+    color: var(--c-film-ink);
+    border: 1px solid var(--c-film-line);
+    font-size: 0.8125rem;
+    pointer-events: none;
+    max-width: 280px;
+  }
+  .dr-tip strong {
+    font-size: 1rem;
+  }
+  .dr-tip span {
+    color: var(--c-film-ink-2);
+  }
+</style>
+
+<script>
+  // Un solo tooltip para todas las gráficas de la página.
+  const tips = Array.from(document.querySelectorAll<HTMLElement>('[data-dr-tip]'));
+  const tip = tips[0];
+  tips.slice(1).forEach((t) => t.remove());
+  if (tip) {
+    const tv = tip.querySelector<HTMLElement>('[data-tv]')!;
+    const tl = tip.querySelector<HTMLElement>('[data-tl]')!;
+    const mostrar = (row: HTMLElement, x?: number, y?: number) => {
+      if (!row.dataset.tipV) return;
+      tv.textContent = row.dataset.tipV;
+      tl.textContent = row.dataset.tipL ?? '';
+      tip.hidden = false;
+      const r = row.querySelector('.track')!.getBoundingClientRect();
+      const px = x ?? r.left + r.width / 2;
+      const py = y ?? r.top;
+      const w = tip.offsetWidth;
+      tip.style.left = `${Math.min(Math.max(8, px - w / 2), innerWidth - w - 8)}px`;
+      tip.style.top = `${py - tip.offsetHeight - 14}px`;
+    };
+    document.querySelectorAll<HTMLElement>('[data-dr] .row').forEach((row) => {
+      row.addEventListener('pointermove', (e) => mostrar(row, e.clientX, e.clientY));
+      row.addEventListener('pointerleave', () => (tip.hidden = true));
+      row.addEventListener('focus', () => mostrar(row));
+      row.addEventListener('blur', () => (tip.hidden = true));
+    });
+    addEventListener('scroll', () => (tip.hidden = true), { passive: true });
+  }
+</script>

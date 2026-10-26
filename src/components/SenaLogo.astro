@@ -1,0 +1,23 @@
+---
+import { Image } from 'astro:assets';
+import verde from '../assets/marca/sena-verde.webp';
+import blanco from '../assets/marca/sena-blanco.webp';
+
+interface Props {
+  /** Alto en píxeles CSS. */
+  size?: number;
+  variante?: 'verde' | 'blanco';
+  class?: string;
+}
+const { size = 48, variante = 'verde', class: cls = '' } = Astro.props;
+---
+
+<Image
+  src={variante === 'verde' ? verde : blanco}
+  alt="Logo del SENA — Servicio Nacional de Aprendizaje"
+  width={size}
+  height={size}
+  densities={[1, 2]}
+  class={cls}
+  loading="lazy"
+/>

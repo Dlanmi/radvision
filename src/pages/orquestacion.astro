@@ -1,0 +1,319 @@
+---
+import Base from '../layouts/Base.astro';
+import Siguiente from '../components/Siguiente.astro';
+import PageHead from '../components/PageHead.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Rich from '../components/Rich.astro';
+import { agfa, comparativa, necesidad, otrasPlataformas } from '../data/orquestacion';
+import { nn } from '../data';
+
+const etapas = [
+  { t: 'Modalidad', s: 'Estudio DICOM + orden HL7/EMR', items: ['RX', 'TAC', 'RM'] },
+  { t: 'Orquestador', s: 'Motor de reglas: lee la cabecera y la sospecha diagnóstica', items: ['Reglas', 'Enrutamiento'] },
+  { t: 'Inferencia', s: 'Contenedores de IA vía REST/DICOMweb', items: ['Hemorragia', 'Fractura', 'Tórax', 'Próstata'] },
+  { t: 'Normalización', s: 'Salidas convertidas a formatos nativos', items: ['SR', 'GSPS/SEG', 'Alertas'] },
+  { t: 'Visor', s: 'Hallazgos en el visor y worklist priorizada', items: ['Visor', 'PACS', 'Worklist'] },
+];
+
+const vistos = new Set<string>();
+---
+
+<Base title="Orquestación de IA" description="Cómo un orquestador de IA (AGFA Enterprise Imaging) enruta estudios a múltiples algoritmos y consolida los resultados en el visor del radiólogo.">
+  <PageHead crumbs={[{ label: 'Orquestación' }]} kicker="Plataformas de orquestación · AGFA Enterprise Imaging">
+    Orquestación <em>de IA</em>
+    <Fragment slot="lead">{necesidad.intro}</Fragment>
+  </PageHead>
+
+  <!-- Necesidad -->
+  <section class="wrap pb-16 md:pb-24">
+    <ol class="grid grid-cols-1 gap-px border-t border-ink md:grid-cols-3" data-reveal="stagger">
+      {
+        necesidad.problemas.map((p, i) => (
+          <li class="border-b border-line py-6 md:border-b-0 md:pr-8 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:pl-8">
+            <span class="label tnum text-accent-ink">{nn(i + 1)}</span>
+            <h2 class="mt-4 text-[1.25rem] font-semibold">{p.titulo}</h2>
+            <p class="mt-2 text-ink-2">
+              <Rich text={p.texto} seen={vistos} />
+            </p>
+          </li>
+        ))
+      }
+    </ol>
+    <blockquote class="mt-16 grid gap-6 md:mt-24 md:grid-cols-12">
+      <p class="label text-ink-3 md:col-span-3">Definición</p>
+      <p class="display font-medium tracking-[-0.025em] text-[clamp(1.45rem,1.05rem+1.5vw,2.35rem)] leading-[1.2] md:col-span-9" data-split>
+        {necesidad.definicion}
+      </p>
+    </blockquote>
+  </section>
+
+  <!-- Flujo -->
+  <section class="bg-film py-16 text-film-ink md:py-24" aria-labelledby="flujo-h">
+    <div class="wrap">
+      <SectionHead n="01" kicker="El flujo" dark>
+        <span id="flujo-h">Un estudio, <em>varios algoritmos,</em> una sola pantalla.</span>
+        <Fragment slot="lead">{agfa.intro}</Fragment>
+      </SectionHead>
+
+      <div class="flow mt-14 md:mt-20" data-flow aria-label="Diagrama del flujo de orquestación" role="img">
+        {
+          etapas.map((e, i) => (
+            <>
+              {i > 0 && (
+                <div class="cn" aria-hidden="true">
+                  <i class="pk" />
+                </div>
+              )}
+              <div class="st" data-st>
+                <span class="label text-film-ink-2">{nn(i + 1)}</span>
+                <span class="mt-3 block font-display text-[1.25rem] font-semibold leading-none">{e.t}</span>
+                <span class="mt-2 block text-[0.8125rem] leading-snug text-film-ink-2">{e.s}</span>
+                <span class="mt-4 flex flex-wrap gap-1">
+                  {e.items.map((it) => (
+                    <span class="chip-f label">{it}</span>
+                  ))}
+                </span>
+              </div>
+            </>
+          ))
+        }
+      </div>
+
+      <div class="mt-16 grid gap-12 lg:grid-cols-2 lg:gap-10">
+        <div data-reveal="up">
+          <h3 class="label text-film-ink-2">Mecanismo algorítmico</h3>
+          <ol class="mt-5 border-t border-film-line">
+            {
+              agfa.mecanismo.map((m, i) => (
+                <li class="grid grid-cols-[2.5rem_1fr] border-b border-film-line py-5">
+                  <span class="label tnum text-accent">{nn(i + 1)}</span>
+                  <div>
+                    <p class="font-semibold">{m.paso}</p>
+                    <p class="mt-1.5 text-[0.9375rem] text-film-ink-2">{m.texto}</p>
+                  </div>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+        <div data-reveal="up" data-delay="0.1">
+          <h3 class="label text-film-ink-2">Formatos de salida en el visor</h3>
+          <ul class="mt-5 border-t border-film-line">
+            {
+              agfa.salidas.map((s) => (
+                <li class="border-b border-film-line py-5">
+                  <p class="font-semibold">{s.formato}</p>
+                  <p class="mt-1.5 text-[0.9375rem] text-film-ink-2">{s.texto}</p>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Impacto e infraestructura -->
+  <section class="wrap py-16 md:py-24">
+    <SectionHead n="02" kicker="Impacto">
+      Flujo de trabajo <em>e infraestructura</em>
+    </SectionHead>
+
+    <div class="mt-12 grid gap-12 md:mt-16 lg:grid-cols-12 lg:gap-8">
+      <div class="lg:col-span-4" data-reveal="up">
+        <p class="display tnum text-[clamp(3.5rem,2.5rem+3.5vw,6rem)] leading-none">
+          20–35<span class="text-[0.4em] text-ink-2"> %</span>
+        </p>
+        <p class="mt-3 max-w-[26ch] text-[1.125rem] text-ink-2">menos tiempo de redacción del informe en estudios multicéntricos</p>
+      </div>
+      <div class="lg:col-span-8">
+        <p class="label mb-4 text-ink-3">Ing. Industrial y Biomédica</p>
+        <dl class="border-t border-ink" data-reveal="stagger">
+          {
+            agfa.impacto.map((x) => (
+              <div class="grid grid-cols-1 gap-2 border-b border-line py-5 md:grid-cols-[14rem_1fr] md:gap-8">
+                <dt class="font-semibold">{x.titulo}</dt>
+                <dd class="text-ink-2">
+                  <Rich text={x.texto} seen={vistos} />
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p class="label mt-12 mb-4 text-ink-3">Ing. Eléctrica y Computacional</p>
+        <dl class="border-t border-ink" data-reveal="stagger">
+          {
+            agfa.infraestructura.map((x) => (
+              <div class="grid grid-cols-1 gap-2 border-b border-line py-5 md:grid-cols-[14rem_1fr] md:gap-8">
+                <dt class="font-semibold">{x.titulo}</dt>
+                <dd class="text-ink-2">
+                  <Rich text={x.texto} seen={vistos} />
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- Otras plataformas -->
+  <section class="border-t border-line bg-bg-2 py-16 md:py-24">
+    <div class="wrap">
+      <SectionHead n="03" kicker="Mercado">
+        Otras plataformas <em>líderes</em>
+      </SectionHead>
+      <ul class="mt-12 grid gap-px border border-line bg-line md:mt-16 md:grid-cols-3" data-reveal="stagger">
+        {
+          otrasPlataformas.map((p) => (
+            <li class="flex flex-col bg-bg-2 p-6 md:p-7">
+              <span class="label text-ink-3">{p.nota}</span>
+              <h3 class="h-sub mt-6">{p.nombre}</h3>
+              <p class="mt-4 font-semibold leading-snug">{p.enfoque}</p>
+              <p class="mt-3 text-[0.9375rem] text-ink-2">{p.caracteristicas}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Comparativa -->
+  <section class="wrap py-16 md:py-24">
+    <SectionHead n="04" kicker="Matriz comparativa">
+      Software puntual <em>frente a</em> orquestador
+    </SectionHead>
+    <div class="scroll-x mt-12 md:mt-16" data-reveal="up">
+      <table class="tabla min-w-[720px]">
+        <thead>
+          <tr>
+            <th scope="col" class="w-[13rem]">Dimensión técnica</th>
+            {comparativa.columnas.map((c) => <th scope="col">{c}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {
+            comparativa.filas.map((f) => (
+              <tr>
+                <th scope="row" class="label pt-[1.15rem] align-top font-medium text-ink-3">
+                  {f.dimension}
+                </th>
+                <td class="text-ink-2">{f.puntual}</td>
+                <td>{f.orquestador}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <Siguiente
+    desde="orquestacion"
+    final={{
+      titulo: 'Repasa con el glosario',
+      texto: 'Las siglas y conceptos de todo el recorrido, explicados en una frase.',
+      href: '/glosario/',
+      cta: 'Abrir glosario',
+    }}
+  />
+</Base>
+
+<style>
+  .flow {
+    display: flex;
+    flex-direction: column;
+  }
+  .st {
+    position: relative;
+    padding: 1.1rem 1.1rem 1.25rem;
+    border: 1px solid var(--c-film-line);
+    transition:
+      border-color 0.35s,
+      background-color 0.35s;
+  }
+  .st.on {
+    border-color: var(--c-accent);
+    background: color-mix(in oklab, var(--c-accent) 8%, transparent);
+  }
+  .chip-f {
+    border: 1px solid var(--c-film-line);
+    padding: 0.2rem 0.4rem;
+    font-size: 0.625rem;
+    color: var(--c-film-ink-2);
+    transition:
+      color 0.35s,
+      border-color 0.35s;
+  }
+  .st.on .chip-f {
+    color: var(--c-film-ink);
+    border-color: color-mix(in oklab, var(--c-accent) 50%, transparent);
+  }
+  .cn {
+    position: relative;
+    align-self: center;
+    width: 1px;
+    height: 2.75rem;
+    background: repeating-linear-gradient(to bottom, var(--c-film-ink-2) 0 3px, transparent 3px 7px);
+    opacity: 0.8;
+  }
+  .pk {
+    --t: 0;
+    position: absolute;
+    left: 50%;
+    top: calc(var(--t) * 100%);
+    width: 9px;
+    height: 9px;
+    translate: -50% -50%;
+    background: var(--c-accent);
+    box-shadow: 0 0 14px var(--c-accent);
+    opacity: 0;
+  }
+  @media (min-width: 64rem) {
+    .flow {
+      flex-direction: row;
+      align-items: stretch;
+    }
+    .st {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .cn {
+      width: 2.5rem;
+      height: 1px;
+      flex-shrink: 0;
+      background: repeating-linear-gradient(to right, var(--c-film-ink-2) 0 3px, transparent 3px 7px);
+    }
+    .pk {
+      top: 50%;
+      left: calc(var(--t) * 100%);
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap';
+
+  const flow = document.querySelector<HTMLElement>('[data-flow]');
+  const reducido =
+    matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSearchParams(location.search).has('static');
+
+  if (flow && !reducido) {
+    const etapas = Array.from(flow.querySelectorAll<HTMLElement>('[data-st]'));
+    const paquetes = Array.from(flow.querySelectorAll<HTMLElement>('.pk'));
+    const on = (i: number) => () => etapas.forEach((e, k) => e.classList.toggle('on', k === i));
+
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.6, paused: true });
+    tl.call(on(0));
+    paquetes.forEach((p, i) => {
+      tl.set(p, { opacity: 1, '--t': 0 }, '+=0.9')
+        .to(p, { '--t': 1, duration: 0.55, ease: 'power2.inOut' })
+        .set(p, { opacity: 0 })
+        .call(on(i + 1));
+    });
+    tl.to({}, { duration: 1.4 }).call(() => etapas.forEach((e) => e.classList.remove('on')));
+
+    new IntersectionObserver(([e]) => (e.isIntersecting ? tl.play() : tl.pause()), { threshold: 0.3 }).observe(flow);
+  } else if (flow) {
+    flow.querySelectorAll('[data-st]').forEach((e) => e.classList.add('on'));
+  }
+</script>

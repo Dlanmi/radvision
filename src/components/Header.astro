@@ -1,0 +1,196 @@
+---
+import Mark from './Mark.astro';
+import { proyecto } from '../data/proyecto';
+import { nn } from '../data';
+import { nav } from '../data/nav';
+
+
+const path = Astro.url.pathname;
+const activo = (href: string) => path === href || path.startsWith(href);
+---
+
+<header class="site-header" data-header>
+  <div class="wrap flex h-full items-center gap-6">
+    <a href="/" class="flex shrink-0 items-center gap-2.5" aria-label={`${proyecto.sitio}, inicio`}>
+      <Mark class="size-[22px]" />
+      <span class="text-[1.0625rem] font-semibold tracking-[-0.01em]">{proyecto.sitio}</span>
+      <span class="label hidden text-ink-3 sm:inline">/ Imagen diagnóstica</span>
+    </a>
+
+    <nav class="ml-auto hidden xl:block" aria-label="Principal">
+      <ul class="flex items-center gap-1">
+        {
+          nav.map((n) => (
+            <li>
+              <a
+                href={n.href}
+                class="nav-link"
+                aria-current={activo(n.href) ? 'page' : undefined}
+              >
+                {n.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2 xl:ml-4">
+      <button type="button" class="icon-btn gap-3 px-3" data-open-search aria-label="Buscar">
+        <svg viewBox="0 0 20 20" class="size-4" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="8.5" cy="8.5" r="5.5"></circle><path d="M13 13l4.5 4.5"></path>
+        </svg>
+        <span class="label hidden text-ink-3 md:inline">Buscar</span>
+        <kbd class="label hidden border border-line px-1.5 py-0.5 text-ink-3 md:inline" data-kbd>Ctrl K</kbd>
+      </button>
+      <button type="button" class="icon-btn w-10" data-theme-toggle aria-label="Cambiar tema claro u oscuro">
+        <svg viewBox="0 0 20 20" class="size-[18px]" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="10" cy="10" r="7"></circle>
+          <path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"></path>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="icon-btn gap-2 px-3 xl:hidden"
+        data-menu-toggle
+        aria-expanded="false"
+        aria-controls="menu-movil"
+      >
+        <span class="label">Menú</span>
+        <span class="burger" aria-hidden="true"><i></i><i></i></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="menu-movil" class="menu-movil" data-menu hidden>
+  <nav class="wrap flex min-h-full flex-col pt-[calc(var(--header-h)+1.5rem)] pb-8" aria-label="Menú móvil">
+    <ul class="border-t border-film-line">
+      {
+        nav.map((n, i) => (
+          <li class="border-b border-film-line">
+            <a
+              href={n.href}
+              class="flex items-baseline gap-5 py-4"
+              aria-current={activo(n.href) ? 'page' : undefined}
+              data-menu-item
+            >
+              <span class="label w-6 text-film-ink-2">{nn(i + 1)}</span>
+              <span class="display text-[clamp(1.75rem,7vw,2.75rem)]">{n.label}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="label mt-auto pt-10 leading-relaxed text-film-ink-2">
+      SENA · {proyecto.centro}<br />
+      {proyecto.programa} · Ficha {proyecto.ficha}
+    </p>
+  </nav>
+</div>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: var(--header-h);
+    background: color-mix(in oklab, var(--c-bg) 92%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--c-line);
+    transition:
+      background-color 0.3s,
+      color 0.3s,
+      border-color 0.3s;
+  }
+  :global(html.menu-abierto) .site-header {
+    background: var(--c-film);
+    color: var(--c-film-ink);
+    border-color: var(--c-film-line);
+  }
+  .nav-link {
+    position: relative;
+    display: block;
+    padding: 0.5rem 0.55rem;
+    font-size: 0.9063rem;
+    color: var(--c-ink-2);
+    transition: color 0.2s;
+  }
+  .nav-link:hover,
+  .nav-link[aria-current='page'] {
+    color: var(--c-ink);
+  }
+  .nav-link[aria-current='page']::after {
+    content: '';
+    position: absolute;
+    left: 0.55rem;
+    right: 0.55rem;
+    bottom: -0.65rem;
+    height: 2px;
+    background: var(--c-accent);
+  }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.5rem;
+    border: 1px solid var(--c-line);
+    transition:
+      border-color 0.2s,
+      background-color 0.2s;
+  }
+  .icon-btn:hover {
+    border-color: var(--c-line-strong);
+    background: color-mix(in oklab, var(--c-ink) 4%, transparent);
+  }
+  :global(html.menu-abierto) .icon-btn {
+    border-color: var(--c-film-line);
+  }
+  @media (min-width: 80rem) {
+    [data-menu-toggle] {
+      display: none;
+    }
+  }
+  /* Celulares muy angostos: el botón de menú queda solo con el icono. */
+  @media (max-width: 23.75rem) {
+    [data-menu-toggle] {
+      width: 2.5rem;
+      padding: 0;
+    }
+    [data-menu-toggle] .label {
+      display: none;
+    }
+    .site-header .wrap {
+      gap: 0.75rem;
+    }
+  }
+  .burger {
+    display: grid;
+    gap: 4px;
+    width: 16px;
+  }
+  .burger i {
+    display: block;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  [aria-expanded='true'] .burger i:first-child {
+    transform: translateY(2.75px) rotate(45deg);
+  }
+  [aria-expanded='true'] .burger i:last-child {
+    transform: translateY(-2.75px) rotate(-45deg);
+  }
+  .menu-movil {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    overflow-y: auto;
+    background: var(--c-film);
+    color: var(--c-film-ink);
+  }
+  .menu-movil [aria-current='page'] .display {
+    color: var(--c-accent);
+  }
+</style>

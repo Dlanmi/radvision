@@ -1,0 +1,88 @@
+---
+import Base from '../../layouts/Base.astro';
+import Siguiente from '../../components/Siguiente.astro';
+import PageHead from '../../components/PageHead.astro';
+import Schematic from '../../components/Schematic.astro';
+import { equiposEn, fabricantePorId, modalidades, nn, nombreCorto } from '../../data';
+---
+
+<Base title="Modalidades" description="Las 8 modalidades de imagen diagnóstica evaluadas, con los equipos y algoritmos de IA de cada fabricante.">
+  <PageHead crumbs={[{ label: 'Modalidades' }]} kicker={`${nn(modalidades.length)} modalidades · códigos DICOM`}>
+    Modalidades
+    <Fragment slot="lead">
+      Desde la radiografía convencional hasta el PET/CT de cuerpo entero. Cada modalidad tiene una ficha por
+      fabricante, con su algoritmo de IA y su impacto dosimétrico y operativo.
+      <span class="mt-4 block text-[0.9375rem]">
+        Los códigos de cada tarjeta son los que usa el estándar DICOM: DX radiografía, RF fluoroscopia, XA arco en C
+        e intervencionismo, CT tomografía (TAC), MR resonancia (RM), PT PET, US ecografía y BMD densitometría.
+      </span>
+    </Fragment>
+  </PageHead>
+
+  <section class="wrap pb-20 md:pb-28">
+    <ul class="grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4" data-reveal="stagger" data-stagger="0.05">
+      {
+        modalidades.map((m, i) => (
+          <li class="bg-bg">
+            <a href={`/modalidades/${m.id}/`} class="mod flex h-full flex-col p-5 md:p-6" data-redraw>
+              <span class="label flex items-center justify-between text-ink-3">
+                <span class="tnum">{nn(i + 1)}</span>
+                <span class="code">{m.codigo}</span>
+              </span>
+              <span class="thumb mt-6 block px-4 text-ink-2">
+                <Schematic id={m.id} annotate={false} draw />
+              </span>
+              <span class="h-sub mt-6 block">{m.nombre}</span>
+              <span class="mt-3 block text-[0.9375rem] text-ink-2">{m.resumen}</span>
+              <span class="label mt-auto block w-full min-w-0 space-y-1 border-t border-line pt-4 text-ink-3">
+                {equiposEn(m.id).map((e) => (
+                  <span class="block min-w-0 truncate normal-case tracking-normal">
+                    <span class="text-ink-2">{fabricantePorId[e.fabricante].corto}</span> — {nombreCorto(e)}
+                  </span>
+                ))}
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+  <Siguiente desde="modalidades" />
+</Base>
+
+<style>
+  .mod {
+    transition: background-color 0.25s;
+  }
+  .mod > :nth-last-child(1) {
+    margin-top: auto;
+  }
+  .mod .h-sub {
+    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .mod .thumb {
+    transition: color 0.3s;
+  }
+  .code {
+    border: 1px solid var(--c-line-strong);
+    padding: 0.2rem 0.4rem;
+  }
+  .mod span.label.mt-auto {
+    margin-top: 1.75rem;
+  }
+  @media (hover: hover) {
+    .mod:hover {
+      background: var(--c-bg-2);
+    }
+    .mod:hover .h-sub {
+      color: var(--c-accent-ink);
+    }
+    .mod:hover .thumb {
+      color: var(--c-ink);
+    }
+    .mod:hover .code {
+      background: var(--c-ink);
+      color: var(--c-bg);
+    }
+  }
+</style>

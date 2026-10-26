@@ -1,0 +1,142 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import Schematic from '../../components/Schematic.astro';
+import EquipoCard from '../../components/EquipoCard.astro';
+import PrevNext from '../../components/PrevNext.astro';
+import { equiposEn, fabricantePorId, modalidades, nn } from '../../data';
+import type { Modalidad } from '../../data';
+
+export const getStaticPaths = (() =>
+  modalidades.map((m, i) => ({ params: { id: m.id }, props: { m, i } }))) satisfies GetStaticPaths;
+
+interface Props {
+  m: Modalidad;
+  i: number;
+}
+const { m, i } = Astro.props;
+const lista = equiposEn(m.id);
+const prev = modalidades[i - 1];
+const next = modalidades[i + 1];
+
+const filas = [
+  { k: 'algoritmo', t: 'Algoritmo central de IA' },
+  { k: 'impactoFisico', t: 'Impacto físico-médico / calidad de imagen' },
+  { k: 'impactoOperativo', t: 'Impacto operativo' },
+] as const;
+---
+
+<Base title={m.nombre} description={`${m.nombre}: equipos con IA de ${lista.map((e) => fabricantePorId[e.fabricante].corto).join(', ')}. ${m.resumen}`}>
+  <PageHead crumbs={[{ href: '/modalidades/', label: 'Modalidades' }, { label: m.corto }]} kicker={`Modalidad ${nn(i + 1)} / ${nn(modalidades.length)} · DICOM ${m.codigo}`}>
+    {m.nombre}
+    <Fragment slot="lead">{m.resumen}</Fragment>
+    <div slot="after" class="mt-8 flex flex-wrap gap-2" data-reveal="up" data-delay="0.35">
+      <span class:list={['tag', m.ionizante ? 'tag-ion' : '']}>
+        <span class="dot" aria-hidden="true"></span>
+        {m.ionizante ? 'Radiación ionizante' : 'Sin radiación ionizante'}
+      </span>
+      <span class="tag">{lista.length} equipos evaluados</span>
+    </div>
+    <figure slot="aside" class="crop relative border border-line p-6 text-ink-2">
+      <span class="code-bg display" aria-hidden="true">{m.codigo}</span>
+      <Schematic id={m.id} title={`Esquema: ${m.nombre}`} draw />
+      <figcaption class="label mt-4 flex justify-between text-ink-3">
+        <span>Fig. {nn(i + 1)} — {m.codigo}</span>
+        <span>Esquema ilustrativo</span>
+      </figcaption>
+    </figure>
+  </PageHead>
+
+  <section class="wrap pb-16 md:pb-24" aria-labelledby="equipos-h">
+    <h2 id="equipos-h" class="label mb-5 text-ink-3">Los {lista.length} equipos</h2>
+    <div class="grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4" data-reveal="stagger">
+      {lista.map((e) => <EquipoCard e={e} />)}
+    </div>
+  </section>
+
+  <section class="border-t border-line bg-bg-2 py-16 md:py-24" aria-labelledby="comp-h">
+    <div class="wrap">
+      <div class="flex flex-wrap items-end justify-between gap-6">
+        <h2 id="comp-h" class="h-section max-w-[18ch]" data-split>Matriz comparativa <em>· {m.corto}</em></h2>
+        <a href={`/comparador/?m=${m.id}`} class="btn btn-ghost">Abrir en el comparador <span class="arrow">→</span></a>
+      </div>
+
+      <div class="scroll-x mt-10" data-reveal="up">
+        <table class="tabla comp apilada">
+          <thead>
+            <tr>
+              <th scope="col" class="sticky-col">Aspecto</th>
+              {
+                lista.map((e) => (
+                  <th scope="col">
+                    <a href={`/equipos/${e.slug}/`} class="link text-ink">
+                      {fabricantePorId[e.fabricante].corto}
+                    </a>
+                  </th>
+                ))
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="sticky-col label">Equipo evaluado</th>
+              {lista.map((e) => <td data-col={fabricantePorId[e.fabricante].corto} class="font-display text-[1.0625rem] font-semibold leading-tight">{e.nombre}</td>)}
+            </tr>
+            {
+              filas.map((r) => (
+                <tr>
+                  <th scope="row" class="sticky-col label">
+                    {r.t}
+                  </th>
+                  {lista.map((e) => (
+                    <td data-col={fabricantePorId[e.fabricante].corto}>{e.matriz[r.k]}</td>
+                  ))}
+                </tr>
+              ))
+            }
+            <tr>
+              <th scope="row" class="sticky-col label">Regulatorio</th>
+              {
+                lista.map((e) => (
+                  <td data-col={fabricantePorId[e.fabricante].corto}>
+                    <span class="flex flex-wrap gap-1">
+                      {e.regulatorio.map((r) => (
+                        <span class="tag">{r}</span>
+                      ))}
+                    </span>
+                  </td>
+                ))
+              }
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <PrevNext
+    prev={prev && { href: `/modalidades/${prev.id}/`, label: prev.nombre, sub: prev.codigo }}
+    next={next && { href: `/modalidades/${next.id}/`, label: next.nombre, sub: next.codigo }}
+  />
+</Base>
+
+<style>
+  .code-bg {
+    position: absolute;
+    right: 1rem;
+    top: 0.5rem;
+    font-size: 5.5rem;
+    color: var(--c-line);
+    pointer-events: none;
+  }
+  .tag .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c-accent);
+  }
+  .tag-ion .dot {
+    background: var(--c-warn);
+  }
+</style>

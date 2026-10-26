@@ -1,0 +1,65 @@
+<dialog class="buscador" data-search aria-label="Buscar en el sitio">
+  <div class="flex items-center gap-3 border-b border-line px-5">
+    <svg viewBox="0 0 20 20" class="size-[18px] shrink-0 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <circle cx="8.5" cy="8.5" r="5.5"></circle><path d="M13 13l4.5 4.5"></path>
+    </svg>
+    <input
+      type="search"
+      class="h-16 w-full bg-transparent text-[1.125rem] outline-none placeholder:text-ink-3"
+      placeholder="Equipo, algoritmo, modalidad o término…"
+      autocomplete="off"
+      spellcheck="false"
+      data-search-input
+      aria-controls="resultados-busqueda"
+    />
+    <button type="button" class="label shrink-0 border border-line px-2 py-1 text-ink-3" data-search-close>
+      <span class="hidden md:inline">Esc</span><span class="md:hidden">Cerrar</span>
+    </button>
+  </div>
+  <ul id="resultados-busqueda" class="max-h-[min(60vh,520px)] overflow-y-auto py-2" role="listbox" data-search-results></ul>
+  <p class="label border-t border-line px-5 py-3 text-ink-3" data-search-count></p>
+</dialog>
+
+<style>
+  .buscador {
+    width: min(680px, calc(100vw - 2rem));
+    margin: 12vh auto auto;
+    padding: 0;
+    background: var(--c-bg);
+    color: var(--c-ink);
+    border: 1px solid var(--c-line-strong);
+    box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.35);
+  }
+  .buscador::backdrop {
+    background: rgb(10 12 11 / 0.55);
+    backdrop-filter: blur(3px);
+  }
+  .buscador[open] {
+    animation: entra 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  @keyframes entra {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+  .buscador :global(.res) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 1rem;
+    padding: 0.7rem 1.25rem;
+    cursor: pointer;
+  }
+  .buscador :global(.res[aria-selected='true']) {
+    background: var(--c-bg-2);
+    box-shadow: inset 2px 0 0 var(--c-accent);
+  }
+  .buscador :global(.res mark) {
+    background: none;
+    color: var(--c-accent-ink);
+    font-weight: 600;
+  }
+  input[type='search']::-webkit-search-cancel-button {
+    display: none;
+  }
+</style>

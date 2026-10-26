@@ -1,0 +1,83 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import EquipoCard from '../../components/EquipoCard.astro';
+import PrevNext from '../../components/PrevNext.astro';
+import { equiposDe, fabricantes, modalidadPorId, nn } from '../../data';
+import type { Fabricante } from '../../data';
+
+export const getStaticPaths = (() =>
+  fabricantes.map((f, i) => ({ params: { id: f.id }, props: { f, i } }))) satisfies GetStaticPaths;
+
+interface Props {
+  f: Fabricante;
+  i: number;
+}
+const { f, i } = Astro.props;
+const lista = equiposDe(f.id);
+const prev = fabricantes[i - 1];
+const next = fabricantes[i + 1];
+---
+
+<Base title={f.nombre} description={`${f.nombre}: ${lista.length} equipos de imagen diagnóstica con IA autorizada por la FDA. ${f.enfoque}`}>
+  <PageHead crumbs={[{ href: '/fabricantes/', label: 'Fabricantes' }, { label: f.corto }]} kicker={`Fabricante ${nn(i + 1)} / ${nn(fabricantes.length)} · ${f.sede}`}>
+    {f.nombre}
+    <Fragment slot="lead">{f.enfoque}</Fragment>
+  </PageHead>
+
+  <section class="wrap pb-16 md:pb-24" aria-label="Equipos">
+    <div class="grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4" data-reveal="stagger" data-stagger="0.05">
+      {lista.map((e, k) => <EquipoCard e={e} top="modalidad" n={nn(k + 1)} />)}
+    </div>
+  </section>
+
+  <section id="matriz" class="border-t border-line bg-bg-2 py-16 md:py-24">
+    <div class="wrap">
+      <p class="label mb-6 text-ink-3">Matriz comparativa interdisciplinaria</p>
+      <h2 class="h-section max-w-[20ch]" data-split>Impacto diagnóstico y operativo <em>de {f.corto}</em></h2>
+
+      <div class="scroll-x mt-10" data-reveal="up">
+        <table class="tabla matriz-fab apilada">
+          <thead>
+            <tr>
+              <th scope="col" class="sticky-col">Modalidad</th>
+              <th scope="col">Equipo evaluado</th>
+              <th scope="col">Algoritmo central de IA (FDA)</th>
+              <th scope="col">Impacto físico-médico / calidad de imagen</th>
+              <th scope="col">Impacto operativo (Ing. Industrial / Biomédica)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              lista.map((e) => {
+                const m = modalidadPorId[e.modalidad];
+                return (
+                  <tr class="una">
+                    <th scope="row" class="sticky-col">
+                      <span class="label block text-ink-3">{m.codigo}</span>
+                      <span class="mt-1 block font-normal">{m.corto}</span>
+                    </th>
+                    <td data-col="Equipo evaluado">
+                      <a href={`/equipos/${e.slug}/`} class="link-u font-display text-[1.0625rem] font-semibold leading-tight">
+                        {e.nombre}
+                      </a>
+                    </td>
+                    <td data-col="Algoritmo central de IA">{e.matriz.algoritmo}</td>
+                    <td data-col="Impacto físico-médico">{e.matriz.impactoFisico}</td>
+                    <td data-col="Impacto operativo">{e.matriz.impactoOperativo}</td>
+                  </tr>
+                );
+              })
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <PrevNext
+    prev={prev && { href: `/fabricantes/${prev.id}/`, label: prev.nombre }}
+    next={next && { href: `/fabricantes/${next.id}/`, label: next.nombre }}
+  />
+</Base>

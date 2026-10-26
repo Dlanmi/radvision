@@ -1,0 +1,120 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import { categoriasGlosario, glosario } from '../data/glosario';
+import type { CategoriaGlosario } from '../data/glosario';
+import { nn } from '../data';
+
+const cats = Object.keys(categoriasGlosario) as CategoriaGlosario[];
+const grupos = cats.map((c) => ({
+  c,
+  nombre: categoriasGlosario[c],
+  terminos: glosario
+    .filter((t) => t.categoria === c)
+    .sort((a, b) => a.termino.localeCompare(b.termino, 'es')),
+}));
+---
+
+<Base title="Glosario" description="Glosario técnico de imagen diagnóstica e inteligencia artificial: dosimetría, reconstrucción, DICOM, regulación FDA y métricas clínicas.">
+  <PageHead crumbs={[{ label: 'Glosario' }]} kicker={`${glosario.length} términos · ${cats.length} categorías`}>
+    Glosario
+    <Fragment slot="lead">
+      Las siglas y conceptos que aparecen en las fichas. En todo el sitio, los términos subrayados con puntos muestran su
+      definición al pasar el cursor o al tocarlos.
+    </Fragment>
+  </PageHead>
+
+  <div class="filtro" data-filtro-bar>
+    <div class="wrap flex flex-col gap-2.5 py-3">
+      <label class="flex flex-1 items-center gap-3 border border-line px-4">
+        <svg viewBox="0 0 20 20" class="size-4 shrink-0 text-ink-3" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="8.5" cy="8.5" r="5.5"></circle><path d="M13 13l4.5 4.5"></path>
+        </svg>
+        <span class="sr-only">Filtrar términos</span>
+        <input type="search" class="h-11 w-full bg-transparent outline-none placeholder:text-ink-3" placeholder="Filtrar: SAR, DICOM, Dice…" data-filtro autocomplete="off" />
+      </label>
+      <nav class="flex gap-1 overflow-x-auto md:flex-wrap md:overflow-visible" aria-label="Categorías">
+        {
+          grupos.map((g) => (
+            <a href={`#cat-${g.c}`} class="label shrink-0 border border-line px-3 py-2 whitespace-nowrap hover:border-ink">
+              {g.nombre}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </div>
+
+  <div class="wrap pt-10 pb-20 md:pb-28">
+    {
+      grupos.map((g, i) => (
+        <section id={`cat-${g.c}`} class="grid grid-cols-1 gap-6 border-t border-ink py-10 md:grid-cols-12 md:py-14" data-grupo>
+          <h2 class="md:col-span-3">
+            <span class="label tnum block text-accent-ink">{nn(i + 1)}</span>
+            <span class="h-sub mt-3 block">{g.nombre}</span>
+          </h2>
+          <dl class="md:col-span-9">
+            {g.terminos.map((t) => (
+              <div id={t.id} class="term-row grid gap-2 border-b border-line py-5 md:grid-cols-[15rem_1fr] md:gap-8" data-term-row data-q={`${t.termino} ${t.expansion ?? ''} ${t.definicion}`}>
+                <dt>
+                  <span class="block font-display text-[1.3rem] font-semibold leading-tight">{t.termino}</span>
+                  {t.expansion && <span class="label mt-2 block normal-case tracking-normal text-ink-3">{t.expansion}</span>}
+                </dt>
+                <dd class="text-ink-2">{t.definicion}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))
+    }
+    <p class="hidden py-16 text-center text-ink-3" data-vacio>No hay términos que coincidan.</p>
+  </div>
+</Base>
+
+<style>
+  .filtro {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 30;
+    background: color-mix(in oklab, var(--c-bg) 94%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-block: 1px solid var(--c-line);
+  }
+  .term-row {
+    scroll-margin-top: calc(var(--header-h) + 6rem);
+  }
+  .term-row:target {
+    background: linear-gradient(90deg, color-mix(in oklab, var(--c-accent) 14%, transparent), transparent 70%);
+    box-shadow: inset 2px 0 0 var(--c-accent);
+    padding-left: 1rem;
+  }
+  section[data-grupo] {
+    scroll-margin-top: calc(var(--header-h) + 5rem);
+  }
+</style>
+
+<script>
+  const input = document.querySelector<HTMLInputElement>('[data-filtro]')!;
+  const filas = Array.from(document.querySelectorAll<HTMLElement>('[data-term-row]'));
+  const grupos = Array.from(document.querySelectorAll<HTMLElement>('[data-grupo]'));
+  const vacio = document.querySelector<HTMLElement>('[data-vacio]')!;
+  const norm = (s: string) =>
+    s
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  const textos = filas.map((f) => norm(f.dataset.q ?? ''));
+
+  input.addEventListener('input', () => {
+    const q = norm(input.value.trim());
+    filas.forEach((f, i) => (f.hidden = q !== '' && !textos[i].includes(q)));
+    let total = 0;
+    grupos.forEach((g) => {
+      const n = g.querySelectorAll('[data-term-row]:not([hidden])').length;
+      g.hidden = n === 0;
+      total += n;
+    });
+    vacio.classList.toggle('hidden', total > 0);
+  });
+</script>

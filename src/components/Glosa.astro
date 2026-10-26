@@ -1,0 +1,42 @@
+---
+import { glosario, categoriasGlosario } from '../data/glosario';
+
+const datos = Object.fromEntries(
+  glosario.map((t) => [
+    t.id,
+    { t: t.termino, e: t.expansion ?? '', d: t.definicion, c: categoriasGlosario[t.categoria] },
+  ]),
+);
+---
+
+<div class="glosa" role="tooltip" id="glosa" data-glosa hidden>
+  <p class="label text-film-ink-2" data-glosa-cat></p>
+  <p class="mt-2 text-[1.0625rem] font-semibold leading-tight" data-glosa-term></p>
+  <p class="mt-0.5 text-[0.8125rem] text-film-ink-2" data-glosa-exp></p>
+  <p class="mt-3 text-[0.9rem] leading-snug" data-glosa-def></p>
+  <a class="label mt-4 inline-block text-accent" data-glosa-link href="/glosario/">Ver en el glosario →</a>
+</div>
+
+<script type="application/json" id="datos-glosario" set:html={JSON.stringify(datos)} />
+
+<style>
+  .glosa {
+    position: absolute;
+    z-index: 60;
+    width: min(320px, calc(100vw - 2rem));
+    padding: 1rem 1.1rem 1.1rem;
+    background: var(--c-film);
+    color: var(--c-film-ink);
+    border: 1px solid var(--c-film-line);
+    box-shadow: 0 20px 50px -18px rgb(0 0 0 / 0.5);
+  }
+  .glosa::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 28px;
+    height: 2px;
+    background: var(--c-accent);
+  }
+</style>

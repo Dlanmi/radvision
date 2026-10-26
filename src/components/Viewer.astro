@@ -1,0 +1,614 @@
+---
+import Schematic from './Schematic.astro';
+import { equiposEn, modalidades, nn } from '../data';
+import { proyecto } from '../data/proyecto';
+---
+
+<figure class="viewer" data-viewer aria-roledescription="carrusel" aria-label="Recorrido por las 8 modalidades">
+  <div class="screen crop" data-screen>
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="ruler" aria-hidden="true">
+      {Array.from({ length: 21 }, (_, i) => <i class={i % 5 === 0 ? 'big' : ''}></i>)}
+    </div>
+    <div class="cross" aria-hidden="true"><i></i><i></i></div>
+
+    <div class="stage">
+      {
+        modalidades.map((m, i) => (
+          <a
+            href={`/modalidades/${m.id}/`}
+            class="slide"
+            id={`slide-${m.id}`}
+            role="tabpanel"
+            aria-roledescription="diapositiva"
+            aria-label={`${nn(i + 1)} de ${nn(modalidades.length)}: ${m.nombre}`}
+            data-slide={i}
+            data-code={m.codigo}
+            data-name={m.nombre}
+            data-equipos={equiposEn(m.id).length}
+            data-href={`/modalidades/${m.id}/`}
+            aria-hidden={i === 0 ? undefined : 'true'}
+            tabindex={i === 0 ? undefined : -1}
+            draggable="false"
+          >
+            <Schematic id={m.id} title={m.nombre} live={false} />
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="scan" aria-hidden="true"></div>
+
+    <div class="ov tl label" aria-hidden="true">
+      <span>{proyecto.sitio} · CFTHS</span>
+      <span>Ficha {proyecto.ficha}</span>
+    </div>
+    <div class="ov tr label" aria-hidden="true">
+      <span>Serie <b data-v-serie>01</b>/{nn(modalidades.length)}</span>
+      <span>MOD <b data-v-code>{modalidades[0].codigo}</b></span>
+    </div>
+
+    <button type="button" class="nav prev" data-prev aria-label="Modalidad anterior">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg>
+    </button>
+    <button type="button" class="nav next" data-next aria-label="Modalidad siguiente">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg>
+    </button>
+
+    <figcaption class="caption">
+      <span class="min-w-0">
+        <span class="label sub" data-v-code2>{modalidades[0].codigo}</span>
+        <span class="name" data-v-name aria-live="polite">{modalidades[0].nombre}</span>
+        <span class="label sub mt-1 block"><b data-v-equipos>4</b> equipos<span class="hidden sm:inline"> · 4 fabricantes</span></span>
+      </span>
+      <a href={`/modalidades/${modalidades[0].id}/`} class="ver label" data-v-link>Ver modalidad →</a>
+    </figcaption>
+  </div>
+
+  <div class="controls">
+    <button type="button" class="play" data-play aria-pressed="false" aria-label="Pausar el recorrido automático">
+      <svg viewBox="0 0 16 16" class="i-pause" aria-hidden="true"><path d="M5 3v10M11 3v10" /></svg>
+      <svg viewBox="0 0 16 16" class="i-play" aria-hidden="true"><path d="M5 3l8 5-8 5z" /></svg>
+    </button>
+    <div class="tabs" role="tablist" aria-label="Modalidades">
+      {
+        modalidades.map((m, i) => (
+          <button
+            type="button"
+            role="tab"
+            aria-controls={`slide-${m.id}`}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            aria-label={m.nombre}
+            title={m.nombre}
+            tabindex={i === 0 ? 0 : -1}
+            data-goto={i}
+          >
+            <span class="code label">{m.codigo}</span>
+            <i aria-hidden="true"></i>
+          </button>
+        ))
+      }
+    </div>
+  </div>
+  <p class="hint label" data-hint>
+    <span class="hidden sm:inline">Usa las flechas o elige una modalidad</span>
+    <span class="sm:hidden">Desliza o toca una modalidad</span>
+  </p>
+</figure>
+
+<style>
+  /* Colores del visor: plano técnico en tema claro, pantalla de lectura en tema oscuro. */
+  .viewer {
+    --v-bg: #e6e5df;
+    --v-ink: var(--c-ink);
+    --v-ink-2: var(--c-ink-3);
+    --v-line: color-mix(in oklab, var(--c-ink) 9%, transparent);
+    --v-scan: var(--c-accent);
+    --v-blend: multiply;
+  }
+  :global([data-theme='dark']) .viewer {
+    --v-bg: var(--c-film);
+    --v-ink: var(--c-film-ink);
+    --v-ink-2: var(--c-film-ink-2);
+    --v-line: var(--c-film-line);
+    --v-blend: screen;
+  }
+
+  .screen {
+    position: relative;
+    aspect-ratio: 4 / 3.7;
+    background: var(--v-bg);
+    color: var(--v-ink);
+    border: 1px solid var(--c-line);
+    overflow: hidden;
+    isolation: isolate;
+    touch-action: pan-y;
+    transition:
+      background-color 0.3s,
+      color 0.3s;
+  }
+  .screen.crop::before,
+  .screen.crop::after {
+    color: var(--c-accent);
+    opacity: 1;
+    z-index: 3;
+  }
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--v-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--v-line) 1px, transparent 1px);
+    background-size: 12.5% 13.5%;
+    background-position: center;
+    mask-image: radial-gradient(ellipse at center, #000 35%, transparent 80%);
+  }
+  .ruler {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    translate: 0 -50%;
+    display: grid;
+    gap: 7px;
+    opacity: 0.7;
+  }
+  .ruler i {
+    display: block;
+    width: 6px;
+    height: 1px;
+    background: var(--v-ink-2);
+  }
+  .ruler i.big {
+    width: 12px;
+  }
+  .cross i {
+    position: absolute;
+    background: var(--v-line);
+  }
+  .cross i:first-child {
+    left: 50%;
+    top: 8%;
+    bottom: 8%;
+    width: 1px;
+  }
+  .cross i:last-child {
+    top: 50%;
+    left: 8%;
+    right: 8%;
+    height: 1px;
+  }
+  .stage {
+    position: absolute;
+    inset: 14% 13% 26%;
+    z-index: 1;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    visibility: hidden;
+    -webkit-user-drag: none;
+  }
+  .slide:first-child {
+    opacity: 1;
+    visibility: visible;
+  }
+  .slide :global(svg) {
+    max-height: 100%;
+    stroke-width: 1.1;
+    pointer-events: none;
+  }
+  .scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 28%;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in oklab, var(--v-scan) 10%, transparent) 85%,
+      color-mix(in oklab, var(--v-scan) 55%, transparent) 99.4%,
+      transparent
+    );
+    transform: translateY(-110%);
+    mix-blend-mode: var(--v-blend);
+  }
+  .ov {
+    position: absolute;
+    z-index: 3;
+    display: grid;
+    gap: 3px;
+    color: var(--v-ink-2);
+    font-size: 0.65rem;
+  }
+  .ov b,
+  .caption b {
+    font-weight: 500;
+    color: var(--v-ink);
+  }
+  .tl {
+    top: 16px;
+    left: 18px;
+  }
+  .tr {
+    top: 16px;
+    right: 18px;
+    text-align: right;
+  }
+  .nav {
+    position: absolute;
+    z-index: 4;
+    top: 50%;
+    translate: 0 -50%;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--v-ink);
+    background: color-mix(in oklab, var(--v-bg) 70%, transparent);
+    border: 1px solid var(--v-line);
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      border-color 0.2s,
+      color 0.2s,
+      opacity 0.2s;
+  }
+  .nav svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
+  .prev {
+    left: 12px;
+  }
+  .next {
+    right: 12px;
+  }
+  .nav:hover,
+  .nav:focus-visible {
+    background: var(--c-accent);
+    border-color: var(--c-accent);
+    color: #0d0f0e;
+  }
+  .caption {
+    position: absolute;
+    z-index: 3;
+    left: 18px;
+    right: 18px;
+    bottom: 16px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .caption .sub {
+    color: var(--v-ink-2);
+    font-size: 0.65rem;
+  }
+  .caption .name {
+    display: block;
+    margin-top: 0.15rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    font-size: clamp(1.15rem, 0.95rem + 0.8vw, 1.6rem);
+    line-height: 1.1;
+  }
+  .ver {
+    flex-shrink: 0;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--v-line);
+    color: var(--v-ink);
+    font-size: 0.65rem;
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      border-color 0.2s;
+  }
+  .ver:hover {
+    background: var(--v-ink);
+    color: var(--v-bg);
+    border-color: var(--v-ink);
+  }
+
+  /* Controles: reproducir/pausar + pestañas con progreso */
+  .controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+  }
+  .controls .tabs {
+    flex: 1;
+    min-width: 0;
+  }
+  .play {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--c-line-strong);
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+  .play:hover {
+    background: var(--c-ink);
+    color: var(--c-bg);
+  }
+  .play svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+  }
+  .play .i-play {
+    display: none;
+    fill: currentColor;
+    stroke: none;
+  }
+  .play[aria-pressed='true'] .i-play {
+    display: block;
+  }
+  .play[aria-pressed='true'] .i-pause {
+    display: none;
+  }
+  .play[hidden] {
+    display: none;
+  }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .tabs button {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.4rem;
+    height: 2.5rem;
+    padding: 0.35rem 0.4rem 0.4rem;
+    border: 1px solid var(--c-line);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 0.2s,
+      background-color 0.2s;
+  }
+  .tabs button:hover {
+    border-color: var(--c-line-strong);
+    background: color-mix(in oklab, var(--c-ink) 4%, transparent);
+  }
+  .tabs .code {
+    font-size: 0.625rem;
+    color: var(--c-ink-3);
+    transition: color 0.2s;
+  }
+  .tabs [aria-selected='true'] {
+    border-color: var(--c-ink);
+  }
+  .tabs [aria-selected='true'] .code {
+    color: var(--c-ink);
+  }
+  .tabs i {
+    position: relative;
+    display: block;
+    height: 2px;
+    background: var(--c-line);
+    overflow: hidden;
+  }
+  .tabs i::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--c-ink-3);
+    transform-origin: 0 50%;
+    transform: scaleX(var(--p, 0));
+  }
+  .tabs [aria-selected='true'] i::after {
+    background: var(--c-accent);
+  }
+  .hint {
+    margin-top: 0.6rem;
+    color: var(--c-ink-3);
+    font-size: 0.625rem;
+  }
+  @media (max-width: 480px) {
+    .screen {
+      aspect-ratio: 4 / 4.7;
+    }
+    .stage {
+      inset: 14% 13% 33%;
+    }
+    .ov {
+      font-size: 0.58rem;
+    }
+    .ruler {
+      display: none;
+    }
+    .nav {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+    .prev {
+      left: 6px;
+    }
+    .next {
+      right: 6px;
+    }
+    .tabs .code {
+      font-size: 0.56rem;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap';
+  import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+
+  gsap.registerPlugin(DrawSVGPlugin);
+
+  const root = document.querySelector<HTMLElement>('[data-viewer]');
+  if (root) {
+    const screen = root.querySelector<HTMLElement>('[data-screen]')!;
+    const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slide]'));
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-goto]'));
+    const scan = root.querySelector<HTMLElement>('.scan')!;
+    const play = root.querySelector<HTMLButtonElement>('[data-play]')!;
+    const link = root.querySelector<HTMLAnchorElement>('[data-v-link]')!;
+    const set = (sel: string, v: string) => root.querySelectorAll(sel).forEach((n) => (n.textContent = v));
+    const reducido =
+      matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSearchParams(location.search).has('static');
+    const DUR = 5;
+
+    let i = 0;
+    let dibujo: gsap.core.Timeline | null = null;
+    let progreso: gsap.core.Tween | null = null;
+    let enVista = true;
+    let hover = false;
+    // Con movimiento reducido no hay avance automático.
+    let pausado = reducido;
+
+    const puedeAvanzar = () => enVista && !hover && !pausado && !document.hidden;
+    const ir = (d: number) => mostrar((i + d + slides.length) % slides.length);
+    const lineas = (el: Element) =>
+      Array.from(el.querySelectorAll('path, rect, circle, line')).filter((n) => !n.closest('.beam, .dim'));
+
+    const etiquetas = (n: number) => {
+      const s = slides[n];
+      set('[data-v-serie]', String(n + 1).padStart(2, '0'));
+      set('[data-v-code]', s.dataset.code ?? '');
+      set('[data-v-code2]', s.dataset.code ?? '');
+      set('[data-v-name]', s.dataset.name ?? '');
+      set('[data-v-equipos]', s.dataset.equipos ?? '');
+      link.href = s.dataset.href ?? '#';
+      tabs.forEach((t, k) => {
+        t.setAttribute('aria-selected', String(k === n));
+        t.tabIndex = k === n ? 0 : -1;
+        t.style.setProperty('--p', k < n ? '1' : '0');
+      });
+      slides.forEach((sl, k) => {
+        sl.toggleAttribute('aria-hidden', k !== n);
+        sl.tabIndex = k === n ? 0 : -1;
+      });
+    };
+
+    const mostrar = (n: number) => {
+      dibujo?.kill();
+      progreso?.kill();
+      const prev = slides[i];
+      const next = slides[n];
+      i = n;
+      etiquetas(n);
+
+      if (reducido) {
+        slides.forEach((s) => gsap.set(s, { autoAlpha: s === next ? 1 : 0 }));
+        tabs[n].style.setProperty('--p', '1');
+        return;
+      }
+
+      // El dibujo siempre se completa; solo la barra de progreso se puede pausar.
+      dibujo = gsap.timeline();
+      if (prev !== next) dibujo.to(prev, { autoAlpha: 0, duration: 0.3, ease: 'power2.in' });
+      dibujo
+        .set(next, { autoAlpha: 1 })
+        .fromTo(
+          lineas(next),
+          { drawSVG: '0%' },
+          { drawSVG: '100%', duration: 1.3, ease: 'power2.inOut', stagger: 0.012 },
+          '<',
+        )
+        // El haz y las cotas son punteados: aparecen con fundido para conservar el trazo.
+        .from(next.querySelectorAll('.beam, .dim'), { opacity: 0, duration: 0.5, clearProps: 'opacity' }, '<0.9')
+        .fromTo(scan, { yPercent: -110 }, { yPercent: 380, duration: 1.8, ease: 'power1.inOut' }, '<0.15');
+      const giro = next.querySelectorAll('.spin, .spin-slow');
+      if (giro.length) dibujo.fromTo(giro, { rotate: 0 }, { rotate: 90, duration: DUR, ease: 'none' }, '<');
+
+      progreso = gsap.fromTo(
+        tabs[n],
+        { '--p': 0 },
+        { '--p': 1, duration: DUR, ease: 'none', delay: 0.2, paused: !puedeAvanzar(), onComplete: () => ir(1) },
+      );
+    };
+
+    const reanudar = () => {
+      if (puedeAvanzar()) progreso?.resume();
+    };
+    const detener = () => progreso?.pause();
+
+    // Controles
+    root.querySelector('[data-prev]')!.addEventListener('click', () => ir(-1));
+    root.querySelector('[data-next]')!.addEventListener('click', () => ir(1));
+    tabs.forEach((t, k) => t.addEventListener('click', () => mostrar(k)));
+    root.querySelector('[role="tablist"]')!.addEventListener('keydown', (ev) => {
+      const e = ev as KeyboardEvent;
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      ir(e.key === 'ArrowRight' ? 1 : -1);
+      tabs[i].focus();
+    });
+    play.addEventListener('click', () => {
+      pausado = !pausado;
+      play.setAttribute('aria-pressed', String(pausado));
+      play.setAttribute('aria-label', pausado ? 'Reanudar el recorrido automático' : 'Pausar el recorrido automático');
+      if (pausado) detener();
+      else reanudar();
+    });
+
+    // Pausa mientras el cursor está sobre la pantalla.
+    screen.addEventListener('mouseenter', () => {
+      hover = true;
+      detener();
+    });
+    screen.addEventListener('mouseleave', () => {
+      hover = false;
+      reanudar();
+    });
+
+    // Deslizar con el dedo para cambiar de modalidad.
+    let x0 = 0;
+    let deslizo = false;
+    screen.addEventListener('pointerdown', (e) => {
+      x0 = e.clientX;
+      deslizo = false;
+    });
+    screen.addEventListener('pointerup', (e) => {
+      const dx = e.clientX - x0;
+      if (Math.abs(dx) > 40) {
+        deslizo = true;
+        ir(dx < 0 ? 1 : -1);
+      }
+    });
+    screen.addEventListener(
+      'click',
+      (e) => {
+        if (deslizo) {
+          e.preventDefault();
+          deslizo = false;
+        }
+      },
+      true,
+    );
+
+    // Pausa fuera de pantalla o con la pestaña oculta.
+    new IntersectionObserver(([e]) => {
+      enVista = e.isIntersecting;
+      if (enVista) reanudar();
+      else detener();
+    }).observe(root);
+    document.addEventListener('visibilitychange', () => (document.hidden ? detener() : reanudar()));
+
+    if (reducido) play.hidden = true;
+    mostrar(0);
+  }
+</script>

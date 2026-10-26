@@ -1,0 +1,31 @@
+---
+interface Props {
+  n?: string;
+  kicker: string;
+  class?: string;
+  dark?: boolean;
+}
+const { n, kicker, class: cls = '', dark = false } = Astro.props;
+---
+
+<div class:list={['grid gap-6 md:grid-cols-12', cls]}>
+  <div class="md:col-span-3">
+    <p class:list={['label flex items-center gap-3', dark ? 'text-film-ink-2' : 'text-ink-3']}>
+      {n && <span class="text-accent">{n}</span>}
+      <span>{kicker}</span>
+    </p>
+  </div>
+  <div class="md:col-span-9">
+    <h2 class="h-section" data-split><slot /></h2>
+    {
+      Astro.slots.has('lead') && (
+        <div
+          class:list={['mt-6 max-w-[56ch] text-[1.0625rem] md:text-[1.125rem]', dark ? 'text-film-ink-2' : 'text-ink-2']}
+          data-reveal="up"
+        >
+          <slot name="lead" />
+        </div>
+      )
+    }
+  </div>
+</div>

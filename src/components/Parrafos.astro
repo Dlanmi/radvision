@@ -1,0 +1,38 @@
+---
+/**
+ * Divide un texto largo en párrafos cortos cortando solo entre oraciones completas.
+ * El texto no cambia: solo se reparte en bloques más fáciles de leer.
+ */
+import Rich from './Rich.astro';
+
+interface Props {
+  text: string;
+  seen?: Set<string>;
+  /** Longitud aproximada máxima de cada bloque. */
+  max?: number;
+  class?: string;
+}
+const { text, seen, max = 330, class: cls = 'prose-ficha' } = Astro.props;
+
+// Corte entre oraciones: punto/interrogación/exclamación + espacio + mayúscula o apertura.
+const oraciones = text.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡«(])/);
+const bloques: string[] = [];
+let actual = '';
+for (const o of oraciones) {
+  if (actual && (actual + ' ' + o).length > max) {
+    bloques.push(actual);
+    actual = o;
+  } else {
+    actual = actual ? `${actual} ${o}` : o;
+  }
+}
+if (actual) bloques.push(actual);
+---
+
+{
+  bloques.map((b) => (
+    <p class={cls}>
+      <Rich text={b} seen={seen} />
+    </p>
+  ))
+}

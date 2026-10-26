@@ -1,0 +1,241 @@
+---
+import Base from '../layouts/Base.astro';
+import Siguiente from '../components/Siguiente.astro';
+import PageHead from '../components/PageHead.astro';
+import Rich from '../components/Rich.astro';
+import DotRange from '../components/DotRange.astro';
+import type { FilaDR } from '../components/DotRange.astro';
+import { kappa, modulos, rangos, softwareIntro, tablaMetricas } from '../data/software';
+import { nn } from '../data';
+import { Image } from 'astro:assets';
+import { fotosDe } from '../data/fotos';
+
+const destacados: Record<string, { v: string; u: string; t: string }> = {
+  'chest-xray': { v: '91–95', u: '%', t: 'sensibilidad para neumotórax' },
+  'chest-ct': { v: '25–32', u: '%', t: 'menos tiempo de interpretación' },
+  'prostate-mr': { v: '93–96', u: '%', t: 'valor predictivo negativo' },
+};
+
+const fmt = (a: number, b: number) => (a === b ? `${a} %` : `${a}–${b} %`);
+const filasRango: FilaDR[] = rangos.map((r) => ({
+  etiqueta: r.metrica,
+  detalle: r.etiqueta,
+  grupo: r.modulo,
+  tipo: r.umbral ? 'umbral' : 'rango',
+  min: r.min,
+  max: r.max,
+  valor: r.umbral ? `>${r.min} %` : fmt(r.min, r.max),
+}));
+
+const filasKappa: FilaDR[] = [
+  {
+    etiqueta: 'Sin IA',
+    detalle: `Radiólogos no expertos · ${kappa.sinIA.etiqueta}`,
+    tipo: 'rango',
+    min: kappa.sinIA.min,
+    max: kappa.sinIA.max,
+    muted: true,
+    valor: `κ ${kappa.sinIA.min.toFixed(2)}–${kappa.sinIA.max.toFixed(2)}`,
+  },
+  {
+    etiqueta: 'Con AI-Rad Companion',
+    detalle: kappa.conIA.etiqueta,
+    tipo: 'rango',
+    min: kappa.conIA.min,
+    max: kappa.conIA.max,
+    valor: `κ ${kappa.conIA.min.toFixed(2)}–${kappa.conIA.max.toFixed(2)}`,
+  },
+];
+
+const vistos = new Set<string>();
+---
+
+<Base title="Software IA · AI-Rad Companion" description="AI-Rad Companion de Siemens Healthineers: métricas de sensibilidad, especificidad y concordancia para tórax (radiografía y TAC) y próstata (RM).">
+  <PageHead crumbs={[{ label: 'Software IA' }]} kicker="Software de lectura asistida · Siemens Healthineers">
+    AI-Rad <em>Companion</em>
+    <Fragment slot="lead">{softwareIntro}</Fragment>
+  </PageHead>
+
+  <section class="wrap pb-16 md:pb-20" aria-label="Módulos">
+    <ol class="grid grid-cols-1 gap-px border border-line bg-line md:grid-cols-3" data-reveal="stagger">
+      {
+        modulos.map((m, i) => {
+          const d = destacados[m.id];
+          return (
+            <li class="bg-bg">
+              <a href={`#${m.id}`} class="mcard flex h-full flex-col p-6 md:p-7">
+                <span class="label flex justify-between text-ink-3">
+                  <span>Módulo {nn(i + 1)}</span>
+                  <span>{m.modalidad}</span>
+                </span>
+                <span class="h-sub mt-8 block">{m.nombre.replace('AI-Rad Companion ', '')}</span>
+                <span class="display mt-8 block text-[2.75rem] leading-none">
+                  {d.v}
+                  <span class="text-[0.45em] text-ink-2">{d.u}</span>
+                </span>
+                <span class="mt-2 text-ink-2">{d.t}</span>
+                <span class="label mt-auto pt-8">Ver hallazgos ↓</span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+
+  {
+    modulos.map((m, i) => (
+      <section id={m.id} class="border-t border-line py-16 md:py-24">
+        <div class="wrap grid gap-10 lg:grid-cols-12 lg:gap-8">
+          <header class="lg:col-span-4">
+            <div class="lg:sticky lg:top-[calc(var(--header-h)+2rem)]">
+              <p class="label text-accent-ink">Módulo {nn(i + 1)}</p>
+              <h2 class="h-section mt-4" data-split>
+                {m.nombre.replace('AI-Rad Companion ', '')}
+              </h2>
+              <p class="label mt-4 text-ink-3">{m.modalidad}</p>
+              {fotosDe(`sw-${m.id}`).map((f, k) => (
+                <figure class:list={['captura mt-8', k > 0 && 'hidden lg:block']}>
+                  <Image src={f.img} alt={f.alt} widths={[480, 800, 1200]} sizes="(min-width: 1024px) 30vw, 92vw" class="w-full" />
+                  <figcaption class="label mt-2 text-ink-3">{f.producto} · Imagen: {f.credito}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </header>
+          <div class="lg:col-span-8">
+            <p class="text-[clamp(1.2rem,1.05rem+0.5vw,1.45rem)] leading-[1.45]" data-reveal="up">
+              <Rich text={m.intro} seen={vistos} />
+            </p>
+            {m.bloques.map((b) => (
+              <div class="mt-12" data-reveal="up">
+                {b.titulo && <h3 class="label mb-4 text-ink-3">{b.titulo}</h3>}
+                {b.intro && <p class="mb-4 text-ink-2">{b.intro}</p>}
+                <dl class="border-t border-ink">
+                  {b.hallazgos.map((h) => (
+                    <div class="grid grid-cols-1 gap-2 border-b border-line py-5 md:grid-cols-[14rem_1fr] md:gap-8">
+                      <dt class="font-semibold leading-snug">{h.titulo}</dt>
+                      <dd class="text-ink-2">
+                        <Rich text={h.texto} seen={vistos} />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    ))
+  }
+
+  <section class="border-t border-line bg-bg-2 py-16 md:py-24 [--sfc:var(--c-bg-2)]" aria-labelledby="desempeno-h">
+    <div class="wrap">
+      <p class="label text-ink-3">Desempeño reportado</p>
+      <h2 id="desempeno-h" class="h-section mt-4 max-w-[22ch]" data-split>
+        Sensibilidad, especificidad <em>y acuerdo entre lectores</em>
+      </h2>
+
+      <div class="mt-12 grid gap-14 lg:grid-cols-12 lg:gap-10">
+        <div class="lg:col-span-7" data-reveal="up">
+          <h3 class="text-[1.125rem] font-semibold">Rangos reportados por módulo</h3>
+          <p class="mt-1 mb-6 text-[0.9375rem] text-ink-2">
+            Porcentaje. El eje empieza en 70 % para separar los rangos; el degradado indica un umbral («más de 90 %»).
+          </p>
+          <DotRange
+            filas={filasRango}
+            dominio={[70, 100]}
+            ticks={[70, 80, 90, 100]}
+            unidad=" %"
+            caption="Rangos de sensibilidad, especificidad y VPN reportados para cada módulo de AI-Rad Companion."
+          />
+        </div>
+        <div class="lg:col-span-5" data-reveal="up" data-delay="0.1">
+          <h3 class="text-[1.125rem] font-semibold">Kappa de Cohen en PI-RADS v2.1</h3>
+          <p class="mt-1 mb-4 text-[0.9375rem] text-ink-2">
+            Acuerdo interobservador en próstata, de 0 (azar) a 1 (acuerdo perfecto).
+          </p>
+          <ul class="mb-5 flex flex-wrap gap-x-5 gap-y-1 text-[0.875rem] text-ink-2" aria-label="Leyenda">
+            <li class="flex items-center gap-2"><i class="key muted"></i>Sin IA</li>
+            <li class="flex items-center gap-2"><i class="key"></i>Con AI-Rad Companion</li>
+          </ul>
+          <DotRange
+            filas={filasKappa}
+            dominio={[0, 1]}
+            ticks={[0, 0.2, 0.4, 0.6, 0.8, 1]}
+            formatoTick="decimal"
+            stacked
+            caption="Índice Kappa de Cohen sin IA (0.52 a 0.60) y con AI-Rad Companion (0.76 a 0.82)."
+          />
+          <p class="mt-6 text-[0.9375rem] text-ink-2">
+            Con la asistencia del software, el desempeño de lectores noveles se equipara con el de subespecialistas.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-20" data-reveal="up">
+        <h3 class="text-[1.125rem] font-semibold">Resumen de métricas</h3>
+        <div class="scroll-x mt-6">
+          <table class="tabla min-w-[760px]">
+            <thead>
+              <tr>
+                <th scope="col">Módulo de IA</th>
+                <th scope="col">Parámetro evaluado</th>
+                <th scope="col">Métrica / precisión reportada</th>
+                <th scope="col">Comparativa clínica principal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                tablaMetricas.map((r) => (
+                  <tr>
+                    <td class="label pt-[1.15rem] text-ink-3">{r.modulo}</td>
+                    <td class="font-semibold">{r.parametro}</td>
+                    <td class="tnum">{r.metrica}</td>
+                    <td class="text-ink-2">{r.comparativa}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Siguiente
+    desde="software"
+    etiquetaFinal="Paso 06 · continúa"
+    final={{
+      titulo: 'Orquestación de IA',
+      texto: 'Cómo un hospital conecta varios algoritmos en un solo flujo y una sola pantalla.',
+      href: '/orquestacion/',
+      cta: 'Ver orquestación',
+    }}
+  />
+</Base>
+
+<style>
+  .mcard {
+    transition: background-color 0.25s;
+  }
+  @media (hover: hover) {
+    .mcard:hover {
+      background: var(--c-bg-2);
+    }
+  }
+  .captura :global(img) {
+    display: block;
+    background: #0d0f0e;
+    border: 1px solid var(--c-line);
+  }
+  .key {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--c-chart);
+  }
+  .key.muted {
+    background: var(--c-chart-muted);
+  }
+</style>
+
