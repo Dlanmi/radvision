@@ -57,6 +57,7 @@ const vistas = [
           data-active={i === 0 ? '' : undefined}
           data-credito={f.credito}
           data-producto={f.producto}
+          data-fuente={f.fuente ?? ''}
         >
           <Image
             src={f.img}
@@ -85,8 +86,18 @@ const vistas = [
 
   <figcaption class="label mt-3 flex flex-col gap-1 text-ink-3 sm:flex-row sm:justify-between sm:gap-4">
     <span class="shrink-0">Fig. {fig} — {codigo}</span>
-    <span class="min-w-0 normal-case tracking-normal sm:text-right" data-fig-cap>
-      {lista[0] ? `${lista[0].producto} · Imagen: ${lista[0].credito}` : 'Esquema ilustrativo'}
+    <span class="min-w-0 normal-case tracking-normal sm:text-right">
+      <span data-fig-cap>{lista[0] ? `${lista[0].producto} · Imagen: ${lista[0].credito}` : 'Esquema ilustrativo'}</span>
+      <a
+        class="link-u ml-1 whitespace-nowrap text-ink-2"
+        data-fig-fuente
+        href={lista[0]?.fuente ?? '/fuentes/#imagenes'}
+        target={lista[0]?.fuente ? '_blank' : undefined}
+        rel={lista[0]?.fuente ? 'noopener' : undefined}
+        hidden={!lista[0]}
+      >
+        {lista[0]?.fuente ? 'Fuente ↗' : 'Fuente'}
+      </a>
     </span>
   </figcaption>
 </figure>
@@ -168,6 +179,7 @@ const vistas = [
     const tabs = Array.from(fig.querySelectorAll<HTMLButtonElement>('[data-fig-tab]'));
     const vistas = Array.from(fig.querySelectorAll<HTMLElement>('[data-fig-view]'));
     const cap = fig.querySelector<HTMLElement>('[data-fig-cap]');
+    const fuente = fig.querySelector<HTMLAnchorElement>('[data-fig-fuente]');
     const activar = (i: number, foco = false) => {
       tabs.forEach((t, k) => {
         t.setAttribute('aria-selected', String(k === i));
@@ -177,6 +189,19 @@ const vistas = [
       vistas.forEach((v) => v.toggleAttribute('data-active', v.dataset.figView === id));
       const v = vistas.find((x) => x.dataset.figView === id);
       if (cap && v) cap.textContent = v.dataset.credito ? `${v.dataset.producto} · Imagen: ${v.dataset.credito}` : `${v.dataset.producto}`;
+      if (fuente && v) {
+        fuente.hidden = !v.dataset.credito;
+        const url = v.dataset.fuente;
+        fuente.href = url || '/fuentes/#imagenes';
+        fuente.textContent = url ? 'Fuente ↗' : 'Fuente';
+        if (url) {
+          fuente.target = '_blank';
+          fuente.rel = 'noopener';
+        } else {
+          fuente.removeAttribute('target');
+          fuente.removeAttribute('rel');
+        }
+      }
       if (foco) tabs[i].focus();
       v?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: 'ease-out' });
       v?.dispatchEvent(new CustomEvent('fig:mostrar', { bubbles: true }));

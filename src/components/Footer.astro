@@ -43,6 +43,7 @@ import SenaLogo from './SenaLogo.astro';
           <p class="label text-film-ink-2">Secciones</p>
           <ul class="mt-4 space-y-2">
             {nav.map((n) => <li><a class="link" href={n.href}>{n.label}</a></li>)}
+            <li><a class="link" href="/fuentes/">Fuentes y créditos</a></li>
           </ul>
         </div>
         <div>
@@ -80,6 +81,7 @@ import SenaLogo from './SenaLogo.astro';
       <p class="max-w-[70ch]">
         Contenido académico basado en el documento «{proyecto.documento}». No constituye recomendación
         clínica ni comercial. Los nombres de productos y marcas pertenecen a sus respectivos titulares.
+        <a href="/fuentes/" class="link-u text-film-ink">Ver fuentes y créditos.</a>
       </p>
       <p class="label shrink-0">SENA · {proyecto.anio}</p>
     </div>

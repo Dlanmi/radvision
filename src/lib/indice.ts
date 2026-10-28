@@ -73,5 +73,6 @@ export function construirIndice(): ItemBusqueda[] {
       g: 'Glosario',
     })),
     ...nav.map((n) => ({ t: n.label, s: 'Sección', k: '', u: n.href, g: 'Página' })),
+    { t: 'Fuentes y créditos', s: 'Bibliografía', k: 'bibliografía referencias créditos fotos origen licencias', u: '/fuentes/', g: 'Página' },
   ];
 }

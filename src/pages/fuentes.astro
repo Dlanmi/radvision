@@ -1,0 +1,210 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import SectionHead from '../components/SectionHead.astro';
+import SenaLogo from '../components/SenaLogo.astro';
+import { equipos, fabricantePorId, modalidadPorId, nombreCorto, nn } from '../data';
+import { fotos } from '../data/fotos';
+import { modulos } from '../data/software';
+import { proyecto } from '../data/proyecto';
+import { herramientas, logoSena, referencias } from '../data/fuentes';
+
+// Una fila por imagen, en el orden de las fichas y luego el software.
+const filasImagenes = [
+  ...equipos.flatMap((e) =>
+    (fotos[e.slug] ?? []).map((f) => ({
+      donde: `${fabricantePorId[e.fabricante].corto} · ${modalidadPorId[e.modalidad].corto}`,
+      href: `/equipos/${e.slug}/`,
+      pagina: nombreCorto(e),
+      foto: f,
+    })),
+  ),
+  ...modulos.flatMap((m) =>
+    (fotos[`sw-${m.id}`] ?? []).map((f) => ({
+      donde: 'Software IA',
+      href: `/software/#${m.id}`,
+      pagina: m.nombre,
+      foto: f,
+    })),
+  ),
+];
+const delDocumento = filasImagenes.filter((r) => r.foto.origen === 'documento').length;
+const delaWeb = filasImagenes.length - delDocumento;
+---
+
+<Base title="Fuentes y créditos" description="De dónde sale cada contenido de RadVision: el documento del proyecto SENA, la fuente de cada fotografía, las referencias del glosario y las herramientas usadas.">
+  <PageHead crumbs={[{ label: 'Fuentes y créditos' }]} kicker="Bibliografía">
+    Fuentes <em>y créditos</em>
+    <Fragment slot="lead">
+      De dónde sale cada cosa que ves en el sitio: el documento del proyecto, cada fotografía con su titular y su
+      enlace original, las referencias que sustentan el glosario y las herramientas con las que está construido.
+    </Fragment>
+  </PageHead>
+
+  <!-- 01 Documento -->
+  <section class="wrap pb-16 md:pb-24" id="documento">
+    <SectionHead n="01" kicker="Documento fuente">
+      Todo el contenido técnico viene <em>de un solo documento.</em>
+    </SectionHead>
+    <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12" data-reveal="up">
+      <dl class="border-t border-ink lg:col-span-7">
+        {
+          [
+            ['Título', `«${proyecto.documento}»`],
+            ['Tipo', 'Resultado de proyecto formativo (documento académico)'],
+            ['Programa', `${proyecto.programa} (código ${proyecto.codigoPrograma})`],
+            ['Ficha SENA', proyecto.ficha],
+            ['Instructor', proyecto.instructor],
+            ['Centro', `${proyecto.centro} · ${proyecto.regional}`],
+            ['Entidad', proyecto.entidad],
+            ['Año', String(proyecto.anio)],
+          ].map(([k, v]) => (
+            <div class="grid grid-cols-1 gap-1 border-b border-line py-4 sm:grid-cols-[11rem_1fr] sm:gap-6">
+              <dt class="label pt-1 text-ink-3">{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <div class="text-[0.9375rem] text-ink-2 lg:col-span-4 lg:col-start-9">
+        <p>
+          Las 32 fichas, las cuatro matrices comparativas, el apartado de AI-Rad Companion y el de orquestación son
+          transcripciones de ese documento. Las cifras de dosis, tiempo y desempeño son las que el documento reporta;
+          en algunos casos las atribuye a estudios multicéntricos o a ponencias de RSNA, y en la mayoría no cita una
+          fuente específica.
+        </p>
+        <p class="mt-4">
+          Los textos de apoyo del sitio (resúmenes de modalidad, glosario, sedes de los fabricantes, página de
+          indicadores) fueron redactados para RadVision con las referencias de la sección 03.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 Imágenes -->
+  <section class="border-t border-line bg-bg-2 py-16 md:py-24" id="imagenes">
+    <div class="wrap">
+      <SectionHead n="02" kicker="Imágenes">
+        {filasImagenes.length} imágenes, <em>cada una con su fuente.</em>
+        <Fragment slot="lead">
+          {delDocumento} vienen del documento del proyecto y {delaWeb} de las páginas oficiales de cada fabricante.
+          Todas son material de prensa o de producto de su titular y se usan con fines académicos, con crédito. Las
+          marcadas como «imagen referencial» muestran un producto cercano porque el modelo del documento no tiene foto
+          oficial. Los esquemas técnicos de cada modalidad son ilustraciones propias.
+        </Fragment>
+      </SectionHead>
+
+      <div class="scroll-x mt-10" data-reveal="up">
+        <table class="tabla apilada">
+          <thead>
+            <tr>
+              <th scope="col" class="w-[11rem]">Ficha</th>
+              <th scope="col">Lo que muestra</th>
+              <th scope="col">Titular de los derechos</th>
+              <th scope="col">Origen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              filasImagenes.map((r) => (
+                <tr class="una">
+                  <th scope="row" class="font-normal">
+                    <span class="label block text-ink-3">{r.donde}</span>
+                    <a href={r.href} class="link-u mt-1 block">
+                      {r.pagina}
+                    </a>
+                  </th>
+                  <td data-col="Lo que muestra">
+                    {r.foto.producto}
+                    {r.foto.captura && <span class="label ml-2 text-ink-3">captura</span>}
+                  </td>
+                  <td data-col="Titular">{r.foto.credito}</td>
+                  <td data-col="Origen">
+                    {r.foto.origen === 'web' ? (
+                      <a href={r.foto.fuente} target="_blank" rel="noopener" class="link-u break-all">
+                        Página oficial ↗
+                      </a>
+                    ) : (
+                      'Documento del proyecto (material de prensa del fabricante)'
+                    )}
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 Referencias -->
+  <section class="wrap py-16 md:py-24" id="referencias">
+    <SectionHead n="03" kicker="Referencias">
+      Lo que sustenta <em>el glosario y los textos de apoyo.</em>
+    </SectionHead>
+    <ol class="mt-10 border-t border-ink" data-reveal="stagger">
+      {
+        referencias.map((r, i) => (
+          <li class="grid grid-cols-1 gap-2 border-b border-line py-5 md:grid-cols-[3rem_1fr]">
+            <span class="label tnum pt-1 text-accent-ink">{nn(i + 1)}</span>
+            <div>
+              <p class="font-semibold">{r.titulo}</p>
+              <p class="mt-1 text-[0.9375rem] text-ink-2">{r.autor}</p>
+              {r.detalle && <p class="mt-1 text-[0.9375rem] text-ink-2">{r.detalle}</p>}
+              {r.url && (
+                <a href={r.url} target="_blank" rel="noopener" class="link-u mt-2 inline-block break-all text-[0.875rem]">
+                  {r.url}
+                </a>
+              )}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- 04 Herramientas -->
+  <section class="border-t border-line bg-bg-2 py-16 md:py-24" id="herramientas">
+    <div class="wrap">
+      <SectionHead n="04" kicker="Construcción">
+        Herramientas <em>y tipografías.</em>
+      </SectionHead>
+      <ul class="mt-10 grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4" data-reveal="stagger">
+        {
+          herramientas.map((h) => (
+            <li class="flex flex-col bg-bg-2 p-5">
+              <a href={h.url} target="_blank" rel="noopener" class="link-u text-[1.0625rem] font-semibold">
+                {h.nombre}
+              </a>
+              <span class="mt-2 text-[0.9375rem] text-ink-2">{h.uso}</span>
+              <span class="label mt-auto pt-5 text-ink-3">{h.licencia}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- 05 Logo SENA -->
+  <section class="wrap py-16 md:py-24" id="sena">
+    <div class="grid grid-cols-1 gap-8 md:grid-cols-12 md:items-center">
+      <div class="md:col-span-2">
+        <SenaLogo size={120} class="size-[120px]" />
+      </div>
+      <div class="md:col-span-8">
+        <p class="label text-ink-3">05 · Identidad</p>
+        <h2 class="h-sub mt-3">{logoSena.titulo}</h2>
+        <p class="mt-3 text-ink-2">{logoSena.detalle}</p>
+        <p class="mt-3 flex flex-wrap gap-4 text-[0.875rem]">
+          <a href={logoSena.url} target="_blank" rel="noopener" class="link-u">sena.edu.co ↗</a>
+          <a href={logoSena.norma} target="_blank" rel="noopener" class="link-u">Resolución 1825 de 2024 ↗</a>
+        </p>
+      </div>
+    </div>
+    <p class="mt-14 max-w-[72ch] border-t border-line pt-6 text-[0.875rem] text-ink-2">
+      RadVision es un recurso académico sin fines comerciales. Los nombres de productos y marcas pertenecen a sus
+      titulares; las imágenes se reproducen con crédito y enlace a su fuente. Si eres titular de algún material y
+      prefieres que no aparezca, puede retirarse.
+    </p>
+  </section>
+</Base>
